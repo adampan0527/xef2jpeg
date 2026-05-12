@@ -39,7 +39,7 @@
         "Verify entry field shows default path ending with 'XEF2JPEG_Output'",
         "Verify entry field is editable"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 2,
-    "failing": 203,
+    "passing": 3,
+    "failing": 202,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
