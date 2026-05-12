@@ -186,7 +186,7 @@
         "Verify error dialog appears",
         "Verify error message says 'Input file does not exist.'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 13,
-    "failing": 192,
+    "passing": 14,
+    "failing": 191,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
