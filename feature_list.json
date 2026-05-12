@@ -26,7 +26,7 @@
         "Click on entry field and type a test path",
         "Verify text appears in the field"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 1,
-    "failing": 204,
+    "passing": 2,
+    "failing": 203,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
