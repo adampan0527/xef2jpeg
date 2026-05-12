@@ -12,7 +12,7 @@
         "Verify window title shows 'XEF2JPEG - Kinect V2 to JPEG Converter'",
         "Verify window is properly sized (600x400)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 0,
-    "failing": 205,
+    "passing": 1,
+    "failing": 204,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
