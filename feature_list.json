@@ -157,7 +157,7 @@
         "Verify error dialog appears",
         "Verify error message says 'Please select an input XEF file.'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 11,
-    "failing": 194,
+    "passing": 12,
+    "failing": 193,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
