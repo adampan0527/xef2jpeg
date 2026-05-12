@@ -1,0 +1,2558 @@
+{
+  "project_name": "XEF2JPEG Converter",
+  "description": "Windows desktop application for converting Kinect V2 .XEF files to JPEG format",
+  "features": [
+    {
+      "id": "feat-001",
+      "category": "functional",
+      "description": "Application window launches successfully",
+      "steps": [
+        "Run python xef2jpeg.py",
+        "Verify application window appears",
+        "Verify window title shows 'XEF2JPEG - Kinect V2 to JPEG Converter'",
+        "Verify window is properly sized (600x400)"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-002",
+      "category": "functional",
+      "description": "Input file entry field is displayed and editable",
+      "steps": [
+        "Launch application",
+        "Locate 'Input XEF File' label",
+        "Verify entry field is present next to label",
+        "Click on entry field and type a test path",
+        "Verify text appears in the field"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-003",
+      "category": "functional",
+      "description": "Output directory entry field is displayed with default value",
+      "steps": [
+        "Launch application",
+        "Locate 'Output Directory' label",
+        "Verify entry field shows default path ending with 'XEF2JPEG_Output'",
+        "Verify entry field is editable"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-004",
+      "category": "functional",
+      "description": "Input file Browse button opens file dialog",
+      "steps": [
+        "Launch application",
+        "Click 'Browse...' button next to Input XEF File field",
+        "Verify file dialog opens",
+        "Verify dialog title shows 'Select XEF File'",
+        "Verify file type filter shows XEF files"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-005",
+      "category": "functional",
+      "description": "File dialog defaults to current working directory",
+      "steps": [
+        "Launch application from a known directory",
+        "Click 'Browse...' button for input file",
+        "Verify file dialog opens to the current working directory",
+        "Cancel the dialog"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-006",
+      "category": "functional",
+      "description": "Selected input file path appears in entry field",
+      "steps": [
+        "Launch application",
+        "Click 'Browse...' button for input file",
+        "Navigate to XEF2JPEG_Input folder",
+        "Select a .xef file",
+        "Verify file path appears in input entry field"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-007",
+      "category": "functional",
+      "description": "Output directory Browse button opens directory dialog",
+      "steps": [
+        "Launch application",
+        "Click 'Browse...' button next to Output Directory field",
+        "Verify directory dialog opens",
+        "Verify dialog title shows 'Select Output Directory'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-008",
+      "category": "functional",
+      "description": "Selected output directory path appears in entry field",
+      "steps": [
+        "Launch application",
+        "Click 'Browse...' button for output directory",
+        "Select a folder",
+        "Verify folder path appears in output directory entry field"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-009",
+      "category": "functional",
+      "description": "Start Conversion button is displayed",
+      "steps": [
+        "Launch application",
+        "Locate 'Start Conversion' button",
+        "Verify button is visible and enabled"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-010",
+      "category": "functional",
+      "description": "Progress bar is displayed in initial state",
+      "steps": [
+        "Launch application",
+        "Locate progress bar widget",
+        "Verify progress bar is visible",
+        "Verify progress bar shows empty/initial state"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-011",
+      "category": "functional",
+      "description": "Status label shows 'Ready' on launch",
+      "steps": [
+        "Launch application",
+        "Locate status label",
+        "Verify it displays 'Ready'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-012",
+      "category": "functional",
+      "description": "Conversion fails with error when no input file is selected",
+      "steps": [
+        "Launch application",
+        "Leave input file field empty",
+        "Click 'Start Conversion' button",
+        "Verify error dialog appears",
+        "Verify error message says 'Please select an input XEF file.'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-013",
+      "category": "functional",
+      "description": "Conversion fails with error when no output directory is selected",
+      "steps": [
+        "Launch application",
+        "Select an input file",
+        "Clear the output directory field",
+        "Click 'Start Conversion' button",
+        "Verify error dialog appears",
+        "Verify error message says 'Please select an output directory.'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-014",
+      "category": "functional",
+      "description": "Conversion fails when input file does not exist",
+      "steps": [
+        "Launch application",
+        "Type a non-existent file path in input field",
+        "Click 'Start Conversion' button",
+        "Verify error dialog appears",
+        "Verify error message says 'Input file does not exist.'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-015",
+      "category": "functional",
+      "description": "Valid XEF file conversion completes successfully",
+      "steps": [
+        "Place a valid .xef file in XEF2JPEG_Input folder",
+        "Launch application",
+        "Select the .xef file using Browse button",
+        "Verify output directory is set to XEF2JPEG_Output",
+        "Click 'Start Conversion' button",
+        "Verify success dialog appears",
+        "Verify JPEG files are created in output directory"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-016",
+      "category": "functional",
+      "description": "Progress bar animates during conversion",
+      "steps": [
+        "Set up valid input file and output directory",
+        "Click 'Start Conversion' button",
+        "Verify progress bar starts animating",
+        "Verify progress bar stops when conversion completes"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-017",
+      "category": "functional",
+      "description": "Status shows 'Converting...' during conversion",
+      "steps": [
+        "Set up valid input file and output directory",
+        "Click 'Start Conversion' button",
+        "Verify status label shows 'Converting...'",
+        "Verify status returns to 'Ready' after completion"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-018",
+      "category": "functional",
+      "description": "Convert button is disabled during conversion",
+      "steps": [
+        "Set up valid input file and output directory",
+        "Click 'Start Conversion' button",
+        "Verify 'Start Conversion' button becomes disabled",
+        "Verify button becomes enabled again after conversion"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-019",
+      "category": "functional",
+      "description": "Output JPEG file has correct image format",
+      "steps": [
+        "Convert a valid .xef file",
+        "Open the output JPEG file in an image viewer",
+        "Verify it opens successfully as a JPEG image",
+        "Verify image has reasonable dimensions"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-020",
+      "category": "functional",
+      "description": "Multiple frames from XEF file are converted",
+      "steps": [
+        "Use an XEF file with multiple color frames",
+        "Convert the file",
+        "Verify multiple JPEG files are created",
+        "Verify each file represents a different frame"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-021",
+      "category": "functional",
+      "description": "Converted JPEG files have sequential naming",
+      "steps": [
+        "Convert an XEF file with multiple frames",
+        "Check output file names",
+        "Verify files are named with sequential numbers or frame indices"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-022",
+      "category": "functional",
+      "description": "Depth data is preserved or colorized in output",
+      "steps": [
+        "Use an XEF file with depth frame data",
+        "Convert the file",
+        "Verify depth data is represented in output (grayscale or colorized)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-023",
+      "category": "functional",
+      "description": "Application handles missing Kinect SDK gracefully",
+      "steps": [
+        "Run application on a system without Kinect SDK installed",
+        "Verify application launches",
+        "Attempt to convert an XEF file",
+        "Verify informative error message about missing SDK"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-024",
+      "category": "functional",
+      "description": "Application stores last used input directory",
+      "steps": [
+        "Launch application",
+        "Browse and select a file from a specific folder",
+        "Close application",
+        "Relaunch application",
+        "Click Browse for input file",
+        "Verify dialog opens to the previously used directory"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-025",
+      "category": "functional",
+      "description": "Application stores last used output directory",
+      "steps": [
+        "Launch application",
+        "Change output directory to a custom path",
+        "Close application",
+        "Relaunch application",
+        "Verify output directory shows the previously selected path"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-026",
+      "category": "ui",
+      "description": "Application has correct window title",
+      "steps": [
+        "Launch application",
+        "Verify title bar shows 'XEF2JPEG - Kinect V2 to JPEG Converter'"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-027",
+      "category": "ui",
+      "description": "Application window has appropriate default size",
+      "steps": [
+        "Launch application",
+        "Verify window width is approximately 600 pixels",
+        "Verify window height is approximately 400 pixels"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-028",
+      "category": "ui",
+      "description": "Window can be resized by user",
+      "steps": [
+        "Launch application",
+        "Drag window edge to resize",
+        "Verify window resizes appropriately",
+        "Verify UI elements reflow or maintain layout"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-029",
+      "category": "ui",
+      "description": "Title label is displayed with correct text",
+      "steps": [
+        "Launch application",
+        "Locate the 'XEF2JPEG Converter' title label",
+        "Verify it appears at the top of the window",
+        "Verify it uses a larger or bold font"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-030",
+      "category": "ui",
+      "description": "Input label text is correct",
+      "steps": [
+        "Launch application",
+        "Verify label text is exactly 'Input XEF File:'"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-031",
+      "category": "ui",
+      "description": "Output label text is correct",
+      "steps": [
+        "Launch application",
+        "Verify label text is exactly 'Output Directory:'"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-032",
+      "category": "ui",
+      "description": "Browse buttons display correct text",
+      "steps": [
+        "Launch application",
+        "Verify both Browse buttons show 'Browse...' text"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-033",
+      "category": "ui",
+      "description": "Start Conversion button displays correct text",
+      "steps": [
+        "Launch application",
+        "Verify button text is exactly 'Start Conversion'"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-034",
+      "category": "ui",
+      "description": "UI elements are properly aligned in columns",
+      "steps": [
+        "Launch application",
+        "Verify labels are left-aligned in first column",
+        "Verify entry fields are in second column and expand",
+        "Verify Browse buttons are in third column"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-035",
+      "category": "ui",
+      "description": "Progress bar spans full width of window",
+      "steps": [
+        "Launch application",
+        "Verify progress bar extends across most of the window width",
+        "Resize window wider",
+        "Verify progress bar expands with window"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-036",
+      "category": "ui",
+      "description": "Status label is centered in window",
+      "steps": [
+        "Launch application",
+        "Verify status label text is centered or left-aligned below progress bar"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-037",
+      "category": "ui",
+      "description": "Convert button is centered horizontally",
+      "steps": [
+        "Launch application",
+        "Verify 'Start Conversion' button is centered in the window"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-038",
+      "category": "ui",
+      "description": "UI has consistent padding and spacing",
+      "steps": [
+        "Launch application",
+        "Verify there is consistent padding around UI elements",
+        "Verify vertical spacing between rows is uniform"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-039",
+      "category": "ui",
+      "description": "Application uses system-native styling",
+      "steps": [
+        "Launch application",
+        "Verify buttons, entry fields, and labels match Windows system theme",
+        "Verify fonts are readable and appropriate size"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-040",
+      "category": "ui",
+      "description": "Entry fields show full path text without truncation issues",
+      "steps": [
+        "Select a file with a long path",
+        "Verify the entry field displays the path",
+        "Scroll or verify full path is visible"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-041",
+      "category": "ui",
+      "description": "File dialog shows XEF file filter",
+      "steps": [
+        "Click input Browse button",
+        "Verify file type dropdown shows 'XEF files' option",
+        "Verify '*.xef' pattern is associated with it"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-042",
+      "category": "ui",
+      "description": "File dialog shows All files option",
+      "steps": [
+        "Click input Browse button",
+        "Verify file type dropdown includes 'All files' option",
+        "Verify '*.  *' pattern is associated with it"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-043",
+      "category": "ui",
+      "description": "Success dialog shows output directory path",
+      "steps": [
+        "Perform a successful conversion",
+        "Verify success dialog includes the output directory path",
+        "Verify message says 'Conversion completed successfully!'"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-044",
+      "category": "ui",
+      "description": "Error dialogs have appropriate icons",
+      "steps": [
+        "Trigger an input validation error",
+        "Verify error dialog shows error/warning icon",
+        "Trigger a conversion error",
+        "Verify error dialog shows error icon"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-045",
+      "category": "ui",
+      "description": "Window can be moved to different screen positions",
+      "steps": [
+        "Launch application",
+        "Click and drag title bar",
+        "Verify window moves with cursor",
+        "Release at new position",
+        "Verify window stays at new position"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-046",
+      "category": "ui",
+      "description": "Window can be minimized",
+      "steps": [
+        "Launch application",
+        "Click minimize button",
+        "Verify window minimizes to taskbar",
+        "Click taskbar icon",
+        "Verify window restores"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-047",
+      "category": "ui",
+      "description": "Window can be maximized and restored",
+      "steps": [
+        "Launch application",
+        "Click maximize button",
+        "Verify window fills screen",
+        "Click restore button",
+        "Verify window returns to original size"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-048",
+      "category": "ui",
+      "description": "Close button exits application",
+      "steps": [
+        "Launch application",
+        "Click close (X) button",
+        "Verify application window closes",
+        "Verify process terminates"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-049",
+      "category": "ui",
+      "description": "Keyboard Tab order moves through UI elements logically",
+      "steps": [
+        "Launch application",
+        "Press Tab key multiple times",
+        "Verify focus moves through: input entry, input browse, output entry, output browse, convert button",
+        "Verify focused elements show visual indication"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-050",
+      "category": "ui",
+      "description": "Enter key activates focused button",
+      "steps": [
+        "Launch application",
+        "Tab to 'Start Conversion' button",
+        "Press Enter",
+        "Verify button action triggers (validation or conversion)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-051",
+      "category": "error-handling",
+      "description": "Application handles corrupted XEF file gracefully",
+      "steps": [
+        "Create a corrupted or invalid .xef file",
+        "Attempt to convert the corrupted file",
+        "Verify application shows error dialog",
+        "Verify error message indicates file is invalid or corrupted"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-052",
+      "category": "error-handling",
+      "description": "Application handles permission denied on output directory",
+      "steps": [
+        "Set output directory to a read-only or protected location",
+        "Attempt to convert a valid XEF file",
+        "Verify application shows permission error",
+        "Verify application does not crash"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-053",
+      "category": "error-handling",
+      "description": "Application handles disk full scenario",
+      "steps": [
+        "Set output to a nearly full disk (if testable)",
+        "Attempt conversion",
+        "Verify application shows appropriate error message"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-054",
+      "category": "error-handling",
+      "description": "Application handles network path disconnection",
+      "steps": [
+        "Set input or output to a network path",
+        "Disconnect network",
+        "Attempt conversion",
+        "Verify application shows network error message"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-055",
+      "category": "error-handling",
+      "description": "Application handles empty XEF file",
+      "steps": [
+        "Create a zero-byte .xef file",
+        "Attempt to convert it",
+        "Verify application shows appropriate error about empty or invalid file"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-056",
+      "category": "error-handling",
+      "description": "Application handles XEF file with no color frames",
+      "steps": [
+        "Use an XEF file containing only depth data",
+        "Attempt conversion",
+        "Verify application handles gracefully (error or creates depth-only output)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-057",
+      "category": "error-handling",
+      "description": "Application handles very large XEF file",
+      "steps": [
+        "Use an XEF file larger than 1GB (if available)",
+        "Attempt conversion",
+        "Verify application does not crash with out-of-memory",
+        "Verify progress indication works"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-058",
+      "category": "error-handling",
+      "description": "Application handles Unicode characters in file path",
+      "steps": [
+        "Place XEF file in a folder with Unicode characters in name",
+        "Select and convert the file",
+        "Verify conversion succeeds or shows clear error"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-059",
+      "category": "error-handling",
+      "description": "Application handles spaces in file path",
+      "steps": [
+        "Place XEF file in a folder with spaces in name",
+        "Select and convert the file",
+        "Verify conversion succeeds without path issues"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-060",
+      "category": "error-handling",
+      "description": "Application handles long file paths (>260 chars)",
+      "steps": [
+        "Place XEF file in deeply nested folder structure",
+        "Select and convert the file",
+        "Verify application handles long path or shows clear error"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-061",
+      "category": "error-handling",
+      "description": "Application handles file locked by another process",
+      "steps": [
+        "Open XEF file in another program that locks it",
+        "Attempt to convert the locked file",
+        "Verify application shows file-in-use error"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-062",
+      "category": "error-handling",
+      "description": "Application recovers from conversion failure",
+      "steps": [
+        "Trigger a conversion failure",
+        "Dismiss error dialog",
+        "Verify application returns to ready state",
+        "Verify can attempt another conversion"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-063",
+      "category": "error-handling",
+      "description": "Multiple rapid conversion attempts don't crash app",
+      "steps": [
+        "Select invalid input",
+        "Click Convert button rapidly multiple times",
+        "Verify application handles gracefully",
+        "Verify no crash or hang"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-064",
+      "category": "error-handling",
+      "description": "Application handles missing output directory gracefully",
+      "steps": [
+        "Set output to a directory that gets deleted",
+        "Attempt conversion",
+        "Verify application shows error about missing directory"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-065",
+      "category": "error-handling",
+      "description": "Application handles file with wrong extension",
+      "steps": [
+        "Rename a non-XEF file to have .xef extension",
+        "Attempt to convert it",
+        "Verify application shows format error"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-066",
+      "category": "error-handling",
+      "description": "Unhandled exceptions are caught and shown to user",
+      "steps": [
+        "Review code for try/except blocks around conversion",
+        "Verify all conversion errors are caught",
+        "Verify errors are shown in messageboxes, not console"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-067",
+      "category": "error-handling",
+      "description": "Application does not crash on invalid input during conversion",
+      "steps": [
+        "Trigger various error conditions",
+        "Verify application never crashes to desktop",
+        "Verify application always shows user-friendly error message"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-068",
+      "category": "performance",
+      "description": "Application launches within 2 seconds",
+      "steps": [
+        "Start application and measure launch time",
+        "Verify window appears within 2 seconds"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-069",
+      "category": "performance",
+      "description": "File dialog opens within 1 second",
+      "steps": [
+        "Click Browse button",
+        "Measure time for dialog to appear",
+        "Verify dialog appears within 1 second"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-070",
+      "category": "performance",
+      "description": "UI remains responsive during conversion",
+      "steps": [
+        "Start a conversion",
+        "Try to interact with window (move, resize)",
+        "Verify window responds to user input",
+        "Verify no 'Not Responding' state"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-071",
+      "category": "performance",
+      "description": "Conversion completes in reasonable time for typical files",
+      "steps": [
+        "Use a typical XEF file (50-100MB)",
+        "Time the conversion process",
+        "Verify it completes within a reasonable timeframe"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-072",
+      "category": "performance",
+      "description": "Memory usage stays reasonable during conversion",
+      "steps": [
+        "Monitor application memory usage",
+        "Start a conversion of a medium-sized file",
+        "Verify memory does not grow unbounded",
+        "Verify memory is released after conversion"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-073",
+      "category": "performance",
+      "description": "Large file conversion does not freeze UI",
+      "steps": [
+        "Use a large XEF file (>500MB)",
+        "Start conversion",
+        "Verify UI remains interactive throughout",
+        "Verify progress updates are shown"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-074",
+      "category": "performance",
+      "description": "Application starts conversion quickly after button click",
+      "steps": [
+        "Select valid input/output",
+        "Click Convert button",
+        "Verify conversion starts within 500ms"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-075",
+      "category": "performance",
+      "description": "Error dialogs appear quickly when triggered",
+      "steps": [
+        "Trigger a validation error",
+        "Verify error dialog appears within 500ms"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-076",
+      "category": "accessibility",
+      "description": "All interactive elements have descriptive text",
+      "steps": [
+        "Inspect all buttons, labels, and entry fields",
+        "Verify each has meaningful descriptive text",
+        "Verify no generic or missing labels"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-077",
+      "category": "accessibility",
+      "description": "Tab navigation covers all interactive elements",
+      "steps": [
+        "Press Tab repeatedly from first element",
+        "Verify all buttons and entry fields receive focus",
+        "Verify focus order is logical"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-078",
+      "category": "accessibility",
+      "description": "Focused elements have visible focus indicator",
+      "steps": [
+        "Tab through UI elements",
+        "Verify each focused element shows a visible focus rectangle or highlight"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-079",
+      "category": "accessibility",
+      "description": "Application works with high contrast mode",
+      "steps": [
+        "Enable Windows High Contrast mode",
+        "Launch application",
+        "Verify UI elements are still visible and readable",
+        "Verify text contrast is sufficient"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-080",
+      "category": "accessibility",
+      "description": "Application text is readable at default DPI",
+      "steps": [
+        "Run on 100% DPI scaling",
+        "Verify all text is clear and readable",
+        "Verify no text is clipped or overlapping"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-081",
+      "category": "accessibility",
+      "description": "Application handles high DPI scaling",
+      "steps": [
+        "Set Windows display scaling to 150%",
+        "Launch application",
+        "Verify UI scales appropriately",
+        "Verify text is not blurry or misaligned"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-082",
+      "category": "accessibility",
+      "description": "Error messages are clear and actionable",
+      "steps": [
+        "Trigger various error conditions",
+        "Verify each error message clearly describes the problem",
+        "Verify each message suggests what the user should do"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-083",
+      "category": "accessibility",
+      "description": "Progress indication is visible to colorblind users",
+      "steps": [
+        "Start a conversion",
+        "Verify progress bar is visible (not relying solely on color)",
+        "Verify progress animation is perceivable"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-084",
+      "category": "accessibility",
+      "description": "Application has minimum touch target sizes for buttons",
+      "steps": [
+        "Measure button dimensions",
+        "Verify buttons are at least 32x32 pixels for touch accessibility"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-085",
+      "category": "accessibility",
+      "description": "Application works with Windows Narrator",
+      "steps": [
+        "Enable Windows Narrator",
+        "Navigate through application with keyboard",
+        "Verify UI elements are announced by Narrator"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-086",
+      "category": "functional",
+      "description": "Application correctly reads XEF file header",
+      "steps": [
+        "Open a valid .xef file",
+        "Verify file header is parsed correctly",
+        "Verify file metadata is read"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-087",
+      "category": "functional",
+      "description": "Application extracts color frames from XEF",
+      "steps": [
+        "Convert an XEF file with color stream",
+        "Verify output JPEG contains color image data",
+        "Verify image colors are accurate (not inverted or shifted)"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-088",
+      "category": "functional",
+      "description": "Application extracts depth frames from XEF",
+      "steps": [
+        "Convert an XEF file with depth stream",
+        "Verify output contains depth data representation",
+        "Verify depth values are mapped to visual range"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-089",
+      "category": "functional",
+      "description": "Application handles XEF with both color and depth",
+      "steps": [
+        "Convert an XEF file with both streams",
+        "Verify both color and depth outputs are generated",
+        "Verify outputs are properly labeled or organized"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-090",
+      "category": "functional",
+      "description": "JPEG quality is acceptable for color frames",
+      "steps": [
+        "Convert a color frame",
+        "Open output JPEG",
+        "Verify image quality is good (no severe artifacts)",
+        "Verify file size is reasonable"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-091",
+      "category": "functional",
+      "description": "Output JPEG has standard dimensions",
+      "steps": [
+        "Convert a Kinect V2 color frame",
+        "Check output image dimensions",
+        "Verify dimensions match Kinect V2 color resolution (1920x1080)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-092",
+      "category": "functional",
+      "description": "Depth output has Kinect V2 depth resolution",
+      "steps": [
+        "Convert a depth frame",
+        "Check output image dimensions",
+        "Verify dimensions match Kinect V2 depth resolution (512x424)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-093",
+      "category": "functional",
+      "description": "Frame timestamps are preserved in output naming",
+      "steps": [
+        "Convert an XEF file",
+        "Check output file names for timestamp information",
+        "Verify timestamps are sequential and reasonable"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-094",
+      "category": "functional",
+      "description": "Application handles XEF files from different Kinect sensors",
+      "steps": [
+        "Use XEF files from different Kinect V2 devices",
+        "Convert each file",
+        "Verify all convert successfully"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-095",
+      "category": "functional",
+      "description": "Converted images can be opened in standard image viewers",
+      "steps": [
+        "Convert an XEF file",
+        "Open output JPEG in Windows Photos app",
+        "Open output JPEG in web browser",
+        "Verify both display correctly"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-096",
+      "category": "functional",
+      "description": "Output directory is created if it doesn't exist",
+      "steps": [
+        "Set output to a non-existent directory",
+        "Run conversion",
+        "Verify directory is created",
+        "Verify output files are in the new directory"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-097",
+      "category": "functional",
+      "description": "Existing files in output directory are not overwritten by default",
+      "steps": [
+        "Convert an XEF file to get output",
+        "Convert same XEF file again",
+        "Verify both sets of output exist (or check overwrite behavior)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-098",
+      "category": "functional",
+      "description": "Application handles concurrent file selection dialogs",
+      "steps": [
+        "Open a Browse dialog",
+        "Without closing, try to interact with main window",
+        "Verify dialog is modal or behavior is correct"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-099",
+      "category": "functional",
+      "description": "Application correctly handles Windows path separators",
+      "steps": [
+        "Select files using Browse dialog",
+        "Verify paths use backslash separators",
+        "Verify paths work correctly for file operations"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-100",
+      "category": "functional",
+      "description": "Application works when launched from different directories",
+      "steps": [
+        "Launch from project root directory",
+        "Verify it works correctly",
+        "Launch from XEF2JPEG_Input directory",
+        "Verify default output path still points correctly"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-101",
+      "category": "functional",
+      "description": "Application handles XEF file with IR stream",
+      "steps": [
+        "Use XEF file with infrared stream data",
+        "Attempt conversion",
+        "Verify IR data is converted to grayscale image"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-102",
+      "category": "functional",
+      "description": "Application provides frame count or progress indication",
+      "steps": [
+        "Convert a multi-frame XEF file",
+        "Observe progress indication",
+        "Verify user can estimate conversion progress"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-103",
+      "category": "functional",
+      "description": "Cancelled file dialog does not clear existing selection",
+      "steps": [
+        "Select a valid input file",
+        "Click Browse, then Cancel the dialog",
+        "Verify input field still shows previously selected file"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-104",
+      "category": "functional",
+      "description": "Application supports drag and drop of XEF files",
+      "steps": [
+        "Drag a .xef file from Explorer onto application window",
+        "Verify file path appears in input field"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-105",
+      "category": "functional",
+      "description": "Application supports command-line arguments for input file",
+      "steps": [
+        "Run: python xef2jpeg.py path/to/file.xef",
+        "Verify application launches with file path pre-filled"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-106",
+      "category": "functional",
+      "description": "Application creates subdirectories for each XEF file",
+      "steps": [
+        "Convert an XEF file named 'test.xef'",
+        "Verify output files are in a 'test' subdirectory",
+        "Verify organization is clear"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-107",
+      "category": "functional",
+      "description": "Application includes frame number in output filename",
+      "steps": [
+        "Convert a multi-frame XEF",
+        "Check output filenames",
+        "Verify filenames include frame index (e.g., frame_001.jpg)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-108",
+      "category": "functional",
+      "description": "Application handles XEF with variable frame sizes",
+      "steps": [
+        "Use XEF file with frames of different resolutions",
+        "Convert the file",
+        "Verify all frames convert successfully",
+        "Verify output dimensions match source frames"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-109",
+      "category": "functional",
+      "description": "Application does not produce empty output files",
+      "steps": [
+        "Convert several XEF files",
+        "Verify all output JPEG files have non-zero size",
+        "Verify all output files contain valid image data"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-110",
+      "category": "functional",
+      "description": "Application handles XEF with audio stream gracefully",
+      "steps": [
+        "Use XEF file containing audio data",
+        "Convert the file",
+        "Verify conversion succeeds",
+        "Verify audio data is skipped or handled without error"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-111",
+      "category": "functional",
+      "description": "Application shows total converted frame count",
+      "steps": [
+        "Convert a multi-frame XEF",
+        "Check success message or status",
+        "Verify it indicates how many frames were converted"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-112",
+      "category": "functional",
+      "description": "Application handles XEF with no frames gracefully",
+      "steps": [
+        "Create or use XEF file with valid header but no frame data",
+        "Attempt conversion",
+        "Verify informative error or warning message"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-113",
+      "category": "functional",
+      "description": "Application preserves aspect ratio in output images",
+      "steps": [
+        "Convert color frame (16:9)",
+        "Check output JPEG dimensions",
+        "Verify aspect ratio is 16:9 (1920x1080)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-114",
+      "category": "functional",
+      "description": "Application creates XEF2JPEG_Output directory if missing",
+      "steps": [
+        "Delete XEF2JPEG_Output directory if exists",
+        "Launch application",
+        "Verify default output path still shows XEF2JPEG_Output",
+        "Run conversion",
+        "Verify directory is created and files are output"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-115",
+      "category": "functional",
+      "description": "Application handles multiple conversions in sequence",
+      "steps": [
+        "Convert first XEF file",
+        "Verify success",
+        "Change input to second XEF file",
+        "Convert second file",
+        "Verify second conversion also succeeds"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-116",
+      "category": "functional",
+      "description": "Application output filenames include source XEF name",
+      "steps": [
+        "Convert 'mysession.xef'",
+        "Check output filenames",
+        "Verify filenames include 'mysession' or similar identifier"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-117",
+      "category": "functional",
+      "description": "Application handles XEF with corrupted frame gracefully",
+      "steps": [
+        "Use XEF file with one corrupted frame among valid frames",
+        "Convert the file",
+        "Verify valid frames are converted",
+        "Verify corrupted frame is skipped with warning or error"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-118",
+      "category": "functional",
+      "description": "Application output uses standard JPEG format",
+      "steps": [
+        "Convert an XEF file",
+        "Verify output files have .jpg or .jpeg extension",
+        "Verify files are valid JPEG format (check magic bytes)"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-119",
+      "category": "functional",
+      "description": "Application handles read-only input file",
+      "steps": [
+        "Set input XEF file to read-only",
+        "Run conversion",
+        "Verify conversion succeeds (read-only input is fine)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-120",
+      "category": "functional",
+      "description": "Application handles input and output on different drives",
+      "steps": [
+        "Set input to C: drive file",
+        "Set output to D: drive directory",
+        "Run conversion",
+        "Verify conversion succeeds"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-121",
+      "category": "ui",
+      "description": "Application has consistent color scheme",
+      "steps": [
+        "Launch application",
+        "Verify UI elements use consistent system colors",
+        "Verify no jarring color combinations"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-122",
+      "category": "ui",
+      "description": "Window minimum size prevents layout breaking",
+      "steps": [
+        "Resize window to minimum possible size",
+        "Verify UI elements don't overlap",
+        "Verify all elements remain accessible"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-123",
+      "category": "ui",
+      "description": "Progress bar shows indeterminate animation",
+      "steps": [
+        "Start conversion",
+        "Verify progress bar shows a moving/animated indicator",
+        "Verify animation stops when conversion completes"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-124",
+      "category": "ui",
+      "description": "Error dialogs have OK button to dismiss",
+      "steps": [
+        "Trigger a validation error",
+        "Verify dialog has an OK or Close button",
+        "Click OK",
+        "Verify dialog closes"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-125",
+      "category": "ui",
+      "description": "Success dialog has OK button to dismiss",
+      "steps": [
+        "Perform successful conversion",
+        "Verify success dialog has OK button",
+        "Click OK",
+        "Verify dialog closes"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-126",
+      "category": "ui",
+      "description": "Application icon is set (if applicable)",
+      "steps": [
+        "Launch application",
+        "Check window icon in title bar",
+        "Check taskbar icon",
+        "Verify icon is appropriate (not default Python icon)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-127",
+      "category": "ui",
+      "description": "Browse button has consistent width",
+      "steps": [
+        "Launch application",
+        "Verify both Browse buttons have same width",
+        "Verify button text fits without truncation"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-128",
+      "category": "ui",
+      "description": "Entry fields have consistent height with buttons",
+      "steps": [
+        "Launch application",
+        "Verify entry fields and buttons are vertically aligned",
+        "Verify visual alignment looks correct"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-129",
+      "category": "ui",
+      "description": "Status label is readable and not clipped",
+      "steps": [
+        "Launch application",
+        "Verify 'Ready' text is fully visible",
+        "Trigger 'Converting...' status",
+        "Verify full text is visible"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-130",
+      "category": "ui",
+      "description": "Application shows helpful placeholder text in entry fields",
+      "steps": [
+        "Launch application",
+        "Check if entry fields have placeholder or default text",
+        "Verify placeholder helps user understand what to enter"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-131",
+      "category": "ui",
+      "description": "Long file paths are horizontally scrollable in entry",
+      "steps": [
+        "Select a file with a very long path",
+        "Click in entry field",
+        "Use cursor keys to scroll horizontally",
+        "Verify full path is accessible"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-132",
+      "category": "ui",
+      "description": "Dialog windows are centered on parent window",
+      "steps": [
+        "Move main window to a corner",
+        "Trigger an error dialog",
+        "Verify dialog appears centered on main window"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-133",
+      "category": "ui",
+      "description": "Application responds to system theme changes",
+      "steps": [
+        "Launch application",
+        "Switch Windows theme (light/dark)",
+        "Verify application adapts or remains functional"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-134",
+      "category": "ui",
+      "description": "File dialog filter works correctly",
+      "steps": [
+        "Open input Browse dialog",
+        "Select 'XEF files' filter",
+        "Verify only .xef files are shown",
+        "Switch to 'All files' filter",
+        "Verify all files are shown"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-135",
+      "category": "ui",
+      "description": "Directory dialog opens to current output path",
+      "steps": [
+        "Change output directory entry to custom path",
+        "Click Browse for output",
+        "Verify dialog opens to that custom path"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-136",
+      "category": "functional",
+      "description": "Application uses Pillow for image saving",
+      "steps": [
+        "Review code imports",
+        "Verify PIL/Pillow is used for JPEG creation",
+        "Verify image.save() is called with JPEG format"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-137",
+      "category": "functional",
+      "description": "Application reads XEF binary format correctly",
+      "steps": [
+        "Review XEF parsing code",
+        "Verify binary format is read with correct byte order",
+        "Verify frame boundaries are correctly identified"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-138",
+      "category": "functional",
+      "description": "Application handles little-endian XEF data",
+      "steps": [
+        "Verify XEF parser uses little-endian byte order",
+        "Convert a sample file",
+        "Verify output image data is correct"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-139",
+      "category": "functional",
+      "description": "Application handles different XEF versions",
+      "steps": [
+        "Obtain XEF files from different SDK versions",
+        "Convert each file",
+        "Verify all versions are supported or show clear errors"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-140",
+      "category": "functional",
+      "description": "Application converts BGRA color data to RGB for JPEG",
+      "steps": [
+        "Review color conversion code",
+        "Verify BGRA data is converted to RGB before JPEG save",
+        "Verify output colors are not inverted or incorrect"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-141",
+      "category": "functional",
+      "description": "Application maps 16-bit depth to 8-bit grayscale",
+      "steps": [
+        "Review depth processing code",
+        "Verify 16-bit depth values are mapped to 0-255 range",
+        "Verify mapping preserves depth relationships"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-142",
+      "category": "functional",
+      "description": "Application handles Kinect V2 body index data",
+      "steps": [
+        "Use XEF with body index stream",
+        "Attempt conversion",
+        "Verify body index is converted or skipped gracefully"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-143",
+      "category": "functional",
+      "description": "Application handles XEF with skeleton/tracking data",
+      "steps": [
+        "Use XEF with body tracking data",
+        "Convert the file",
+        "Verify conversion succeeds",
+        "Verify tracking data doesn't cause errors"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-144",
+      "category": "functional",
+      "description": "Output JPEG compression quality is configurable",
+      "steps": [
+        "Review code for JPEG quality parameter",
+        "Verify quality can be adjusted (or is set to reasonable default)",
+        "Convert and verify file size reflects quality setting"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-145",
+      "category": "functional",
+      "description": "Application converts IR stream to grayscale JPEG",
+      "steps": [
+        "Use XEF with IR stream",
+        "Convert to JPEG",
+        "Verify output is grayscale image",
+        "Verify IR intensity values are represented"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-146",
+      "category": "functional",
+      "description": "Application can handle XEF files larger than 4GB",
+      "steps": [
+        "Use an XEF file larger than 4GB",
+        "Attempt conversion",
+        "Verify file is read correctly (64-bit file handling)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-147",
+      "category": "functional",
+      "description": "Application cleanup resources after conversion",
+      "steps": [
+        "Convert an XEF file",
+        "Verify file handles are released",
+        "Verify input file can be deleted/moved after conversion"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-148",
+      "category": "functional",
+      "description": "Application logs conversion activity",
+      "steps": [
+        "Run a conversion",
+        "Check for log output or log file",
+        "Verify key activities are logged (start, frames, completion)"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-149",
+      "category": "functional",
+      "description": "Application handles Windows path with drive letter",
+      "steps": [
+        "Select file from C:\\Users\\...",
+        "Convert successfully",
+        "Verify path handling works with drive letters"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-150",
+      "category": "functional",
+      "description": "Application handles UNC network paths",
+      "steps": [
+        "Set input or output to \\\\server\\share\\...",
+        "Attempt operation",
+        "Verify path is handled correctly"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-151",
+      "category": "functional",
+      "description": "Application creates output with correct file permissions",
+      "steps": [
+        "Convert an XEF file",
+        "Check output file permissions",
+        "Verify files are readable and not locked"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-152",
+      "category": "functional",
+      "description": "Application handles XEF file with extended metadata",
+      "steps": [
+        "Use XEF file with additional metadata sections",
+        "Convert the file",
+        "Verify conversion succeeds",
+        "Verify metadata doesn't cause parsing errors"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-153",
+      "category": "functional",
+      "description": "Application uses threading for non-blocking conversion",
+      "steps": [
+        "Start a conversion",
+        "Verify UI remains responsive",
+        "Verify conversion happens in background thread"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-154",
+      "category": "functional",
+      "description": "Application updates progress from background thread",
+      "steps": [
+        "Start conversion",
+        "Verify progress bar updates during conversion",
+        "Verify updates happen without freezing UI"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-155",
+      "category": "functional",
+      "description": "Application safely accesses UI from conversion thread",
+      "steps": [
+        "Review threading code",
+        "Verify UI updates use proper thread-safe methods",
+        "Verify no race conditions in UI updates"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-156",
+      "category": "functional",
+      "description": "Application handles conversion cancellation",
+      "steps": [
+        "Start conversion of large file",
+        "Close application window during conversion",
+        "Verify application closes cleanly without crash"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-157",
+      "category": "functional",
+      "description": "Application validates input before starting conversion",
+      "steps": [
+        "Click Convert with empty input",
+        "Verify error before any processing starts",
+        "Click Convert with valid input",
+        "Verify conversion starts"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-158",
+      "category": "functional",
+      "description": "Application uses pathlib for path operations",
+      "steps": [
+        "Review code imports and path handling",
+        "Verify pathlib is used for path manipulation",
+        "Verify paths are handled correctly across different contexts"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-159",
+      "category": "functional",
+      "description": "Application has proper error handling in XEF parser",
+      "steps": [
+        "Review XEF parsing code",
+        "Verify try/except blocks around parsing operations",
+        "Verify errors are propagated to UI with clear messages"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-160",
+      "category": "functional",
+      "description": "Application validates XEF file magic bytes",
+      "steps": [
+        "Attempt to convert non-XEF file with .xef extension",
+        "Verify application checks file format signature",
+        "Verify appropriate error is shown"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-161",
+      "category": "functional",
+      "description": "Application handles XEF stream configuration data",
+      "steps": [
+        "Parse XEF file with stream configuration",
+        "Verify resolution, format, and fps are read correctly",
+        "Verify conversion uses correct parameters"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-162",
+      "category": "functional",
+      "description": "Application writes JPEG with correct EXIF orientation",
+      "steps": [
+        "Convert Kinect color frame",
+        "Check output JPEG EXIF data",
+        "Verify orientation is correct"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-163",
+      "category": "functional",
+      "description": "Application uses context managers for file operations",
+      "steps": [
+        "Review file I/O code",
+        "Verify 'with' statements are used for file operations",
+        "Verify files are properly closed after operations"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-164",
+      "category": "functional",
+      "description": "Application handles system sleep/wake during conversion",
+      "steps": [
+        "Start conversion",
+        "Put system to sleep",
+        "Wake system",
+        "Verify conversion completes or shows appropriate status"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-165",
+      "category": "functional",
+      "description": "Application supports batch conversion of multiple files",
+      "steps": [
+        "Select multiple XEF files (if supported)",
+        "Run batch conversion",
+        "Verify all files are converted"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-166",
+      "category": "functional",
+      "description": "Application includes version information",
+      "steps": [
+        "Launch application",
+        "Check for version display or about dialog",
+        "Verify version information is accessible"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-167",
+      "category": "functional",
+      "description": "Application gracefully handles import errors",
+      "steps": [
+        "Uninstall Pillow",
+        "Launch application",
+        "Verify import error is caught",
+        "Verify user-friendly error message is shown"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-168",
+      "category": "functional",
+      "description": "Application does not modify input XEF file",
+      "steps": [
+        "Calculate checksum of input XEF file",
+        "Run conversion",
+        "Verify input file checksum unchanged"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-169",
+      "category": "functional",
+      "description": "Application handles very short XEF file (1-2 frames)",
+      "steps": [
+        "Use XEF file with only 1-2 frames",
+        "Convert successfully",
+        "Verify correct number of output files"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-170",
+      "category": "functional",
+      "description": "Application handles XEF with interleaved streams",
+      "steps": [
+        "Use XEF with color and depth frames interleaved",
+        "Convert file",
+        "Verify both stream types are correctly separated"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-171",
+      "category": "functional",
+      "description": "Application uses appropriate buffer sizes for reading",
+      "steps": [
+        "Review XEF reading code",
+        "Verify efficient buffer sizes are used",
+        "Verify no excessive memory allocation for reads"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-172",
+      "category": "functional",
+      "description": "Application converts depth data to proper grayscale values",
+      "steps": [
+        "Convert depth frame",
+        "Open output grayscale JPEG",
+        "Verify values are in 0-255 range",
+        "Verify closer objects appear brighter (or darker, consistently)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-173",
+      "category": "functional",
+      "description": "Application handles XEF with no color stream gracefully",
+      "steps": [
+        "Use XEF with only depth and IR streams",
+        "Convert file",
+        "Verify conversion succeeds or shows clear error"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-174",
+      "category": "functional",
+      "description": "Application handles large number of frames (>1000)",
+      "steps": [
+        "Use XEF file with many frames",
+        "Convert file",
+        "Verify all frames are converted",
+        "Verify memory doesn't grow excessively"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-175",
+      "category": "functional",
+      "description": "Application has clean exit on Ctrl+C",
+      "steps": [
+        "Run application from console",
+        "Press Ctrl+C",
+        "Verify application exits cleanly"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-176",
+      "category": "functional",
+      "description": "Application main window is resizable with minimum size",
+      "steps": [
+        "Attempt to resize window very small",
+        "Verify window has minimum size limit",
+        "Verify UI elements remain usable at minimum size"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-177",
+      "category": "functional",
+      "description": "Application restores window position on relaunch",
+      "steps": [
+        "Move window to specific position",
+        "Close application",
+        "Relaunch application",
+        "Verify window appears at same position"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-178",
+      "category": "functional",
+      "description": "Application output filenames are Windows-compatible",
+      "steps": [
+        "Convert several XEF files",
+        "Verify output filenames don't contain invalid characters",
+        "Verify filenames don't use reserved names (CON, PRN, etc.)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-179",
+      "category": "functional",
+      "description": "Application handles simultaneous Browse button clicks",
+      "steps": [
+        "Quickly click both Browse buttons",
+        "Verify only one dialog opens",
+        "Verify application doesn't crash"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-180",
+      "category": "functional",
+      "description": "Application includes error traceback in log for debugging",
+      "steps": [
+        "Trigger an unexpected error",
+        "Check console or log output",
+        "Verify traceback is available for debugging"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-181",
+      "category": "functional",
+      "description": "Application initializes tkinter properly",
+      "steps": [
+        "Review main() function",
+        "Verify tk.Tk() is created before XEF2JPEGApp",
+        "Verify mainloop() is called"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-182",
+      "category": "functional",
+      "description": "Application uses StringVar correctly for entry binding",
+      "steps": [
+        "Review UI setup code",
+        "Verify StringVar is used for input_file and output_directory",
+        "Verify entry fields are bound to StringVars"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-183",
+      "category": "functional",
+      "description": "Application correctly uses grid layout manager",
+      "steps": [
+        "Review layout code",
+        "Verify grid() is used consistently",
+        "Verify row/column weights are set for resizing"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-184",
+      "category": "functional",
+      "description": "Application sets window size via geometry",
+      "steps": [
+        "Launch application",
+        "Verify window size matches specified geometry",
+        "Verify geometry string is valid (600x400)"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-185",
+      "category": "functional",
+      "description": "Application uses ttk widgets for modern appearance",
+      "steps": [
+        "Review imports and widget creation",
+        "Verify ttk.Button, ttk.Entry, ttk.Label are used",
+        "Verify widgets have native Windows appearance"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-186",
+      "category": "functional",
+      "description": "Application handles file dialog parent window correctly",
+      "steps": [
+        "Open a Browse dialog",
+        "Verify dialog is modal to main window",
+        "Verify main window cannot be interacted with while dialog is open"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-187",
+      "category": "functional",
+      "description": "Application uses os.path.exists for file validation",
+      "steps": [
+        "Review validation code",
+        "Verify os.path.exists or pathlib.exists is used",
+        "Verify validation happens before conversion starts"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-188",
+      "category": "functional",
+      "description": "Application converts frame data to PIL Image correctly",
+      "steps": [
+        "Review conversion code",
+        "Verify numpy array or bytes are converted to PIL Image",
+        "Verify Image.frombuffer or Image.fromarray is used correctly"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-189",
+      "category": "functional",
+      "description": "Application saves JPEG with correct mode (RGB/L)",
+      "steps": [
+        "Review image saving code",
+        "Verify color images are saved in RGB mode",
+        "Verify depth images are saved in L (grayscale) mode"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-190",
+      "category": "functional",
+      "description": "Application generates unique output filenames",
+      "steps": [
+        "Convert same XEF file twice to different output dirs",
+        "Verify filenames are consistent",
+        "Verify no filename collisions when converting multiple files"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-191",
+      "category": "functional",
+      "description": "Application handles Windows file locking correctly",
+      "steps": [
+        "Start conversion",
+        "Try to delete output file while conversion is writing",
+        "Verify appropriate error or successful completion"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-192",
+      "category": "functional",
+      "description": "Application works with Python 3.8+",
+      "steps": [
+        "Run with Python 3.8",
+        "Verify no syntax errors",
+        "Verify all features work",
+        "Test with Python 3.11 or 3.12"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-193",
+      "category": "functional",
+      "description": "Application handles missing tkinter gracefully",
+      "steps": [
+        "Test on minimal Python install without tkinter",
+        "Verify clear error message about missing tkinter"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-194",
+      "category": "functional",
+      "description": "Application properly terminates on window close",
+      "steps": [
+        "Launch application",
+        "Close window via X button",
+        "Verify process terminates in task manager",
+        "Verify no zombie processes"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-195",
+      "category": "functional",
+      "description": "Application handles rapid open/close of file dialogs",
+      "steps": [
+        "Open Browse dialog",
+        "Cancel immediately",
+        "Open again quickly",
+        "Repeat several times",
+        "Verify no crash"
+      ],
+      "passes": false,
+      "priority": "low"
+    },
+    {
+      "id": "feat-196",
+      "category": "functional",
+      "description": "Application uses consistent error handling patterns",
+      "steps": [
+        "Review all try/except blocks",
+        "Verify consistent error handling approach",
+        "Verify errors are shown via messagebox.showerror"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-197",
+      "category": "functional",
+      "description": "Application uses messagebox.showinfo for success",
+      "steps": [
+        "Review success notification code",
+        "Verify messagebox.showinfo is used",
+        "Verify message includes output path"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-198",
+      "category": "functional",
+      "description": "Application uses messagebox.showerror for errors",
+      "steps": [
+        "Trigger each type of error",
+        "Verify messagebox.showerror is used for all error dialogs",
+        "Verify error title and message are set"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-199",
+      "category": "functional",
+      "description": "Application disables button during conversion to prevent double-click",
+      "steps": [
+        "Start conversion",
+        "Verify button state is disabled",
+        "Verify button cannot be clicked during conversion",
+        "Verify button re-enables after conversion"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-200",
+      "category": "functional",
+      "description": "Application starts progress bar animation during conversion",
+      "steps": [
+        "Start conversion",
+        "Verify progress.start() is called",
+        "Verify progress bar shows animation",
+        "Verify progress.stop() is called after conversion"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-201",
+      "category": "functional",
+      "description": "Application uses after() for UI updates from threads",
+      "steps": [
+        "Review conversion thread code",
+        "Verify root.after() is used for UI updates",
+        "Verify no direct UI manipulation from worker thread"
+      ],
+      "passes": false,
+      "priority": "high"
+    },
+    {
+      "id": "feat-202",
+      "category": "functional",
+      "description": "Application has proper __name__ == '__main__' guard",
+      "steps": [
+        "Review xef2jpeg.py entry point",
+        "Verify if __name__ == '__main__': guard exists",
+        "Verify main() is called within guard"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-203",
+      "category": "functional",
+      "description": "Application class is properly structured with __init__",
+      "steps": [
+        "Review XEF2JPEGApp class",
+        "Verify __init__ method initializes all state",
+        "Verify setup_ui is called from __init__"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-204",
+      "category": "functional",
+      "description": "Application stores state variables as instance attributes",
+      "steps": [
+        "Review class attributes",
+        "Verify input_file, output_directory are instance attributes",
+        "Verify is_converting flag is tracked"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-205",
+      "category": "functional",
+      "description": "Application uses default output path from current directory",
+      "steps": [
+        "Launch application",
+        "Verify output directory default is cwd/XEF2JPEG_Output",
+        "Verify path uses Path.cwd() or equivalent"
+      ],
+      "passes": false,
+      "priority": "high"
+    }
+  ],
+  "metadata": {
+    "total_features": 205,
+    "passing": 0,
+    "failing": 205,
+    "last_updated": "2026-05-12",
+    "categories": {
+      "functional": 150,
+      "ui": 30,
+      "error-handling": 17,
+      "accessibility": 10,
+      "performance": 8
+    }
+  }
+}

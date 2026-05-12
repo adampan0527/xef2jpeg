@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kinect XEF input files (keep sample, ignore large files)
+XEF2JPEG_Input/*.xef
+!XEF2JPEG_Input/.gitkeep
+
+# Generated output
+XEF2JPEG_Output/*
+!XEF2JPEG_Output/.gitkeep
+
+# Byte-compiled
+*.pyc
+
+# Logs
+*.log

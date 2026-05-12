@@ -1,0 +1,24 @@
+{
+  "project_name": "Your Project Name",
+  "description": "Brief description of the project",
+  "features": [
+    {
+      "id": "feat-001",
+      "category": "functional",
+      "description": "Example feature description",
+      "steps": [
+        "Step 1: Navigate to the main interface",
+        "Step 2: Perform the action",
+        "Step 3: Verify the expected result"
+      ],
+      "passes": false,
+      "priority": "high"
+    }
+  ],
+  "metadata": {
+    "total_features": 0,
+    "passing": 0,
+    "failing": 0,
+    "last_updated": "YYYY-MM-DD"
+  }
+}
