@@ -93,7 +93,7 @@
         "Verify directory dialog opens",
         "Verify dialog title shows 'Select Output Directory'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 6,
-    "failing": 199,
+    "passing": 7,
+    "failing": 198,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
