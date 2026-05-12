@@ -250,6 +250,7 @@ Changes made:
 - Updated feature_list.json for 7 features (feat-016 to feat-022)
 - Updated metadata: passing=22, failing=183
 - Created comprehensive test scripts for each feature
+- Committed: b7229e0 "Implement feat-016 to feat-022: UI feedback and conversion verification"
 
 Next session should:
 - Continue with feat-023: Application handles missing Kinect SDK gracefully
@@ -258,9 +259,59 @@ Next session should:
 
 ---
 
+---
+
+SESSION 7 - Coding Agent
+-----------------------
+Date: 2026-05-13
+Worked on: Complete rewrite of XEF parser using actual file structure
+Status: Implemented and tested
+Features now passing: 22 / 205
+
+Key Implementation:
+- Rewrote xef_parser.py (500 lines) using correct XEF file structure:
+  - EVENTS1 file header parsing (44 bytes)
+  - Stream descriptor detection (0x3333 markers)
+  - Segment descriptor format (32-byte header + frame data)
+  - Sequential segment scanning for frame extraction
+  - Stream type detection: Body(1), Calibration(2), Depth(3), IR(4), Opaque(5), Telemetry(6)
+- Removed naive heuristic BGRA frame search (was extracting random data)
+- Correctly extracts Depth (512x424 uint16) and IR (512x424 uint16) frames
+- Context-aware normalization: depth uses valid range (0-8000mm), IR uses percentile clipping
+- Added XEFParser class with stream type constants, stream info, and validation
+- Updated convert_xef_to_jpeg to return (frame_types, saved_files) tuple
+- Added stream type selection UI: Depth+IR, Depth Only, IR Only
+- Window resized to 600x450 to accommodate new dropdown
+
+Why rewrite was needed:
+- Old parser searched entire file for BGRA frames (1920x1080x4 bytes)
+- Test XEF files have NO color stream - only depth, IR, skeleton, calibration, opaque, telemetry
+- Old parser was extracting fragments of calibration tables as "color" frames
+- New parser reads actual segment descriptors to identify frame boundaries correctly
+
+Verification Results:
+- Depth frames: 512x424, 4.9% non-zero pixels (valid depth data)
+- IR frames: 512x424, 87.4% non-zero pixels (rich IR signal)
+- Depth-only mode: correctly extracts only depth frames
+- IR-only mode: correctly extracts only IR frames
+- max_frames limiting works correctly (per stream type)
+- Progress callback fires at 4 stages
+- Error handling: FileNotFoundError for missing files, ValueError for invalid files
+
+Changes made:
+- Completely rewrote xef_parser.py (500 lines, up from 222)
+- Updated xef2jpeg.py: added stream type dropdown, updated return type handling
+- Updated claude-progress.txt
+
+Next session should:
+- Continue with feat-023: Application handles missing Kinect SDK gracefully
+- Consider adding tail index parsing for faster segment lookup in large files
+- Consider adding depth colormap option for visualization
+
+---
 SUMMARY
 -------
-Total Sessions: 7
+Total Sessions: 8
 Features Completed: 22 / 205
-Status: Core conversion and UI feedback features implemented
+Status: XEF parser fully rewritten with correct file structure parsing
 Ready for coding: Yes

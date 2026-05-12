@@ -23,11 +23,12 @@ class XEF2JPEGApp:
         """Initialize the application."""
         self.root = root
         self.root.title("XEF2JPEG - Kinect V2 to JPEG Converter")
-        self.root.geometry("600x400")
+        self.root.geometry("600x450")
 
         # Application state
         self.input_file = tk.StringVar()
         self.output_directory = tk.StringVar(value=str(Path.cwd() / "XEF2JPEG_Output"))
+        self.stream_mode = tk.StringVar(value="depth_ir")
         self.is_converting = False
 
         # Setup UI
@@ -65,20 +66,28 @@ class XEF2JPEGApp:
         ttk.Button(main_frame, text="Browse...",
                   command=self.browse_output_directory).grid(row=2, column=2, pady=5)
 
+        # Stream type selection
+        ttk.Label(main_frame, text="Stream Type:").grid(row=3, column=0,
+                                                        sticky=tk.W, pady=5)
+        stream_combo = ttk.Combobox(main_frame, textvariable=self.stream_mode,
+                                   values=["depth_ir", "depth_only", "ir_only"],
+                                   state="readonly", width=20)
+        stream_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
+
         # Progress bar
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E),
+        self.progress.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E),
                           pady=20)
 
         # Status label
         self.status_var = tk.StringVar(value="Ready")
         status_label = ttk.Label(main_frame, textvariable=self.status_var)
-        status_label.grid(row=4, column=0, columnspan=3, pady=5)
+        status_label.grid(row=5, column=0, columnspan=3, pady=5)
 
         # Convert button
         self.convert_button = ttk.Button(main_frame, text="Start Conversion",
                                         command=self.start_conversion)
-        self.convert_button.grid(row=5, column=0, columnspan=3, pady=10)
+        self.convert_button.grid(row=6, column=0, columnspan=3, pady=10)
 
     def browse_input_file(self):
         """Open file dialog to select input XEF file."""
@@ -135,19 +144,31 @@ class XEF2JPEGApp:
                 self.status_var.set(message)
                 self.root.update()
 
-            # Perform conversion (limit to 100 frames for performance)
-            saved_files = convert_xef_to_jpeg(
+            # Determine target streams based on selection
+            mode = self.stream_mode.get()
+            if mode == "depth_only":
+                target_streams = [3]  # Depth only
+            elif mode == "ir_only":
+                target_streams = [4]  # IR only
+            else:
+                target_streams = [3, 4]  # Both depth and IR
+
+            # Perform conversion
+            frame_types, saved_files = convert_xef_to_jpeg(
                 self.input_file.get(),
                 self.output_directory.get(),
                 max_frames=100,  # Limit for performance
+                target_streams=target_streams,
                 callback=progress_callback
             )
 
-            # Show success message with file count
+            # Show success message with stream type info
             file_count = len(saved_files)
+            stream_names = ", ".join(frame_types)
             messagebox.showinfo("Success",
                               f"Conversion completed successfully!\n\n"
-                              f"Converted {file_count} frame(s)\n"
+                              f"Stream types: {stream_names}\n"
+                              f"Frames converted: {file_count}\n"
                               f"Output saved to: {self.output_directory.get()}")
 
         except Exception as e:
