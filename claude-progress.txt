@@ -75,15 +75,40 @@ Changes made:
 - Committed: edfbc9a "Implement feat-001: Application window launches successfully"
 
 Next session should:
-- Continue with feat-002: Input file entry field is displayed and editable
-- Verify entry field accepts user input
-- Test that the StringVar binding works correctly
+- Continue with feat-003: Output directory entry field is displayed with default value
+- Verify output directory shows default path ending with 'XEF2JPEG_Output'
+- Verify entry field is editable
+
+---
+
+SESSION 2 - Coding Agent
+-----------------------
+Date: 2026-05-12
+Worked on: feat-002 - Input file entry field is displayed and editable
+Status: Verified and marked as passing
+Features now passing: 2 / 205
+
+Verification:
+- 'Input XEF File' label is displayed (lines 52-53 in xef2jpeg.py)
+- Entry field is present and bound to self.input_file StringVar (lines 54-55)
+- StringVar is initialized in __init__ (line 28)
+- Entry widget accepts user text input by default
+
+Changes made:
+- Updated feature_list.json to mark feat-002 as passes: true
+- Updated metadata: passing=2, failing=203
+- Committed: 4efbf05 "Implement feat-002: Input file entry field is displayed and editable"
+
+Next session should:
+- Continue with feat-003: Output directory entry field is displayed with default value
+- Verify default path ends with 'XEF2JPEG_Output'
+- Verify entry field is editable
 
 ---
 
 SUMMARY
 -------
-Total Sessions: 2
-Features Completed: 1 / 205
+Total Sessions: 3
+Features Completed: 2 / 205
 Status: Development in progress
 Ready for coding: Yes
