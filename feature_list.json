@@ -66,7 +66,7 @@
         "Verify file dialog opens to the current working directory",
         "Cancel the dialog"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 4,
-    "failing": 201,
+    "passing": 5,
+    "failing": 200,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
