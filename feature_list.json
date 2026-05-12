@@ -215,7 +215,7 @@
         "Verify progress bar starts animating",
         "Verify progress bar stops when conversion completes"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -228,7 +228,7 @@
         "Verify status label shows 'Converting...'",
         "Verify status returns to 'Ready' after completion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -241,7 +241,7 @@
         "Verify 'Start Conversion' button becomes disabled",
         "Verify button becomes enabled again after conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -254,7 +254,7 @@
         "Verify it opens successfully as a JPEG image",
         "Verify image has reasonable dimensions"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -267,7 +267,7 @@
         "Verify multiple JPEG files are created",
         "Verify each file represents a different frame"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -279,7 +279,7 @@
         "Check output file names",
         "Verify files are named with sequential numbers or frame indices"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -291,7 +291,7 @@
         "Convert the file",
         "Verify depth data is represented in output (grayscale or colorized)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 15,
-    "failing": 190,
+    "passing": 22,
+    "failing": 183,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,
