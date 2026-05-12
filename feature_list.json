@@ -131,7 +131,7 @@
         "Verify progress bar is visible",
         "Verify progress bar shows empty/initial state"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 9,
-    "failing": 196,
+    "passing": 10,
+    "failing": 195,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
