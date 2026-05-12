@@ -46,18 +46,24 @@ Provide `CODING_AGENT_PROMPT.md`. The agent will:
 
 - Windows 10 or Windows 11
 - Python 3.8+
+- uv (Python package manager)
 - Kinect for Windows SDK 2.0 (for XEF file handling)
 - Pillow library (for image processing)
 
 ## Installation
 
 ```bash
-# Create virtual environment (recommended)
-python -m venv venv
-venv\Scripts\activate
+# Install uv (if not already installed)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# Install dependencies
-pip install -r requirements.txt
+# Create virtual environment with uv
+uv venv
+
+# Activate virtual environment
+.venv\Scripts\activate
+
+# Install dependencies with uv
+uv pip install -r requirements.txt
 ```
 
 ## Running the Application

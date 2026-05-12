@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # init.sh - Development environment startup and testing script for XEF2JPEG
-# This script sets up the development environment and runs basic tests
+# This script sets up the development environment using uv and runs basic tests
 
 set -e  # Exit on error
 
@@ -23,26 +23,42 @@ fi
 PYTHON_VERSION=$(python --version 2>&1)
 echo "Found: $PYTHON_VERSION"
 
+# Check uv installation
+echo "Checking uv installation..."
+if ! command -v uv &> /dev/null; then
+    echo "WARNING: uv is not installed or not in PATH"
+    echo "Installing uv..."
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to install uv"
+        echo "Please install uv manually: https://github.com/astral-sh/uv"
+        exit 1
+    fi
+fi
+
+UV_VERSION=$(uv --version 2>&1)
+echo "Found: $UV_VERSION"
+
 # Create virtual environment if it doesn't exist
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    python -m venv venv
+if [ ! -d ".venv" ]; then
+    echo "Creating virtual environment with uv..."
+    uv venv
 fi
 
 # Activate virtual environment
 echo "Activating virtual environment..."
-if [ -f "venv/Scripts/activate" ]; then
-    source venv/Scripts/activate
-elif [ -f "venv/bin/activate" ]; then
-    source venv/bin/activate
+if [ -f ".venv/Scripts/activate" ]; then
+    source .venv/Scripts/activate
+elif [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
 else
     echo "ERROR: Could not find virtual environment activation script"
     exit 1
 fi
 
-# Install dependencies
-echo "Installing dependencies..."
-pip install -r requirements.txt
+# Install dependencies with uv
+echo "Installing dependencies with uv..."
+uv pip install -r requirements.txt
 
 echo ""
 echo "=========================================="
@@ -74,7 +90,7 @@ python -c "import tkinter; print('   ✓ tkinter available')" || {
 echo "2. Testing Pillow installation..."
 python -c "from PIL import Image; print('   ✓ Pillow available')" || {
     echo "   ✗ Pillow not available"
-    echo "   Run: pip install Pillow"
+    echo "   Run: uv pip install Pillow"
 }
 
 # Test 3: Check if xef2jpeg.py has valid syntax

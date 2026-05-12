@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 XEF2JPEG is a Windows desktop application that converts .XEF files (captured by Kinect V2) to JPEG format. The application is built using the long-running agent harness framework for incremental, context-window-spanning development.
 
 **Target Platform:** Windows 10 & Windows 11
+**Python Environment:** uv (fast Python package manager)
 **Input Directory:** `XEF2JPEG_Input/`
 **Output Directory:** `XEF2JPEG_Output/`
 
@@ -40,6 +41,29 @@ The GUI application should provide:
 - Progress indication during conversion
 
 ## Development Workflow
+
+### Environment Setup
+
+This project uses **uv** for Python package management (faster alternative to pip/venv).
+
+```bash
+# Install uv (if not already installed)
+# Windows (PowerShell):
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Create virtual environment with uv
+uv venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+
+# Install dependencies with uv
+uv pip install -r requirements.txt
+
+# Run the application
+python xef2jpeg.py
+```
 
 ### Starting a New Project (Initializer Session)
 

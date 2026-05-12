@@ -4,11 +4,15 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.venv/
 venv/
 env/
 *.egg-info/
 dist/
 build/
+
+# uv
+uv.lock
 
 # IDE
 .vscode/
