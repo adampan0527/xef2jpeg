@@ -106,7 +106,7 @@
         "Select a folder",
         "Verify folder path appears in output directory entry field"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 7,
-    "failing": 198,
+    "passing": 8,
+    "failing": 197,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
