@@ -143,7 +143,7 @@
         "Locate status label",
         "Verify it displays 'Ready'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 10,
-    "failing": 195,
+    "passing": 11,
+    "failing": 194,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
