@@ -118,7 +118,7 @@
         "Locate 'Start Conversion' button",
         "Verify button is visible and enabled"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 8,
-    "failing": 197,
+    "passing": 9,
+    "failing": 196,
     "last_updated": "2026-05-12",
     "categories": {
       "functional": 150,
