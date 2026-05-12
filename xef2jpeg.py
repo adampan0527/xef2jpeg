@@ -13,6 +13,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
+from xef_parser import convert_xef_to_jpeg
 
 
 class XEF2JPEGApp:
@@ -125,15 +126,28 @@ class XEF2JPEGApp:
     def perform_conversion(self):
         """Perform the actual XEF to JPEG conversion."""
         try:
-            # TODO: Implement actual XEF to JPEG conversion
-            # This is a placeholder - real implementation would:
-            # 1. Read .XEF binary format
-            # 2. Extract color/depth frames
-            # 3. Convert to JPEG
-            # 4. Save to output directory
+            # Update status
+            self.status_var.set("Parsing XEF file...")
+            self.root.update()
 
+            # Define progress callback
+            def progress_callback(progress, message):
+                self.status_var.set(message)
+                self.root.update()
+
+            # Perform conversion (limit to 100 frames for performance)
+            saved_files = convert_xef_to_jpeg(
+                self.input_file.get(),
+                self.output_directory.get(),
+                max_frames=100,  # Limit for performance
+                callback=progress_callback
+            )
+
+            # Show success message with file count
+            file_count = len(saved_files)
             messagebox.showinfo("Success",
-                              "Conversion completed successfully!\n"
+                              f"Conversion completed successfully!\n\n"
+                              f"Converted {file_count} frame(s)\n"
                               f"Output saved to: {self.output_directory.get()}")
 
         except Exception as e:
