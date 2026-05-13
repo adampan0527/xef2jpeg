@@ -53,13 +53,12 @@ def save_settings(settings):
 
 # Windows API constants for drag-and-drop
 WM_DROPFILES = 0x0233
+WM_CLOSE = 0x0010
 GWL_WNDPROC = -4
-WM_DESTROY = 0x0002
 
 # Windows API functions
 shell32 = ctypes.windll.shell32
 user32 = ctypes.windll.user32
-kernel32 = ctypes.windll.kernel32
 
 # Function signatures
 shell32.DragQueryFileW.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.UINT,
@@ -77,33 +76,61 @@ WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.wintypes.HWND,
 _original_wndproc = None
 _wndproc_ref = None
 _app_ref = None
+_dnd_enabled = False
 
 
 def _new_wndproc(hwnd, msg, wparam, lparam):
     """Custom window procedure to handle WM_DROPFILES."""
-    if msg == WM_DROPFILES and _app_ref is not None:
-        # Get number of files dropped
-        num_files = shell32.DragQueryFileW(wparam, 0xFFFFFFFF, None, 0)
-        if num_files > 0:
-            # Get first file path
-            buf = ctypes.create_unicode_buffer(520)
-            shell32.DragQueryFileW(wparam, 0, buf, 520)
-            file_path = buf.value
-            if file_path and file_path.lower().endswith('.xef'):
-                _app_ref.input_file.set(file_path)
-        shell32.DragFinish(wparam)
-        return 0
-    elif msg == WM_DESTROY:
-        # Restore original window procedure before destroy
+    try:
+        if msg == WM_DROPFILES and _app_ref is not None:
+            # Get number of files dropped
+            num_files = shell32.DragQueryFileW(wparam, 0xFFFFFFFF, None, 0)
+            if num_files > 0:
+                # Get first file path
+                buf = ctypes.create_unicode_buffer(520)
+                shell32.DragQueryFileW(wparam, 0, buf, 520)
+                file_path = buf.value
+                if file_path and file_path.lower().endswith('.xef'):
+                    _app_ref.input_file.set(file_path)
+            shell32.DragFinish(wparam)
+            return 0
+    except Exception:
+        pass
+
+    # For all messages (including WM_DROPFILES failures), call original proc
+    try:
+        if _original_wndproc:
+            return user32.CallWindowProcW(_original_wndproc, hwnd, msg, wparam, lparam)
+    except (OSError, ValueError):
+        pass
+    return 0
+
+
+def remove_drag_drop(root):
+    """Remove the drag-and-drop subclass before window destruction.
+
+    Must be called before tkinter destroys the window to avoid
+    access violations from stale WndProc pointers.
+    """
+    global _original_wndproc, _wndproc_ref, _app_ref, _dnd_enabled
+
+    if not _dnd_enabled:
+        return
+
+    try:
+        hwnd = ctypes.wintypes.HWND(root.winfo_id())
+        # Restore original window procedure
         if _original_wndproc:
             user32.SetWindowLongPtrW(hwnd, GWL_WNDPROC, _original_wndproc)
-        user32.PostQuitMessage(0)
-        return 0
+        # Stop accepting drops
+        shell32.DragAcceptFiles(hwnd, False)
+    except (OSError, ValueError):
+        pass
 
-    # Call original window procedure
-    if _original_wndproc:
-        return user32.CallWindowProcW(_original_wndproc, hwnd, msg, wparam, lparam)
-    return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+    _original_wndproc = None
+    _wndproc_ref = None
+    _app_ref = None
+    _dnd_enabled = False
 
 
 def setup_drag_drop(root, app):
@@ -113,22 +140,28 @@ def setup_drag_drop(root, app):
         root: tkinter root window
         app: XEF2JPEGApp instance
     """
-    global _original_wndproc, _wndproc_ref, _app_ref
+    global _original_wndproc, _wndproc_ref, _app_ref, _dnd_enabled
 
     _app_ref = app
 
-    # Get the window handle
-    hwnd = ctypes.wintypes.HWND(root.winfo_id())
+    try:
+        # Get the window handle
+        hwnd = ctypes.wintypes.HWND(root.winfo_id())
 
-    # Accept drag-and-drop files
-    shell32.DragAcceptFiles(hwnd, True)
+        # Accept drag-and-drop files
+        shell32.DragAcceptFiles(hwnd, True)
 
-    # Store original window procedure
-    _original_wndproc = user32.GetWindowLongPtrW(hwnd, GWL_WNDPROC)
+        # Store original window procedure
+        _original_wndproc = user32.GetWindowLongPtrW(hwnd, GWL_WNDPROC)
 
-    # Create new window procedure (must keep reference to prevent GC)
-    _wndproc_ref = WNDPROC(_new_wndproc)
-    user32.SetWindowLongPtrW(hwnd, GWL_WNDPROC, _wndproc_ref)
+        # Create new window procedure (must keep reference to prevent GC)
+        _wndproc_ref = WNDPROC(_new_wndproc)
+        user32.SetWindowLongPtrW(hwnd, GWL_WNDPROC, _wndproc_ref)
+        _dnd_enabled = True
+    except (OSError, ValueError):
+        # Drag-and-drop setup failed silently - not critical
+        _original_wndproc = None
+        _dnd_enabled = False
 
 
 def check_kinect_sdk():
@@ -199,6 +232,9 @@ class XEF2JPEGApp:
         # Setup drag-and-drop support
         self.root.after(100, lambda: setup_drag_drop(self.root, self))
 
+        # Clean up drag-and-drop subclass before window closes
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
     def setup_ui(self):
         """Setup the user interface."""
         # Main frame
@@ -264,6 +300,11 @@ class XEF2JPEGApp:
     def _show_sdk_info(self):
         """Show Kinect SDK status information on startup."""
         messagebox.showinfo("Kinect SDK Status", self.sdk_message)
+
+    def _on_close(self):
+        """Handle window close - clean up resources before destroying."""
+        remove_drag_drop(self.root)
+        self.root.destroy()
 
     def browse_input_file(self):
         """Open file dialog to select input XEF file."""
