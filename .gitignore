@@ -37,3 +37,6 @@ XEF2JPEG_Output/*
 
 # Logs
 *.log
+
+# Application settings (user-specific)
+xef2jpeg_settings.json

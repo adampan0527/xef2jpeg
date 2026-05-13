@@ -10,10 +10,124 @@ Target Platform: Windows 10 & Windows 11
 
 import os
 import sys
+import json
+import ctypes
+import ctypes.wintypes
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 from xef_parser import convert_xef_to_jpeg
+
+# Settings file path (stored in same directory as script)
+SETTINGS_FILE = Path(__file__).parent / "xef2jpeg_settings.json"
+
+
+def load_settings():
+    """Load application settings from JSON file.
+
+    Returns:
+        dict with settings, or empty dict if file doesn't exist.
+    """
+    try:
+        if SETTINGS_FILE.exists():
+            with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        pass
+    return {}
+
+
+def save_settings(settings):
+    """Save application settings to JSON file.
+
+    Args:
+        settings: dict with settings to save.
+    """
+    try:
+        with open(SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=2)
+    except OSError:
+        pass
+
+
+# Windows API constants for drag-and-drop
+WM_DROPFILES = 0x0233
+GWL_WNDPROC = -4
+WM_DESTROY = 0x0002
+
+# Windows API functions
+shell32 = ctypes.windll.shell32
+user32 = ctypes.windll.user32
+kernel32 = ctypes.windll.kernel32
+
+# Function signatures
+shell32.DragQueryFileW.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.UINT,
+                                   ctypes.wintypes.LPWSTR, ctypes.wintypes.UINT]
+shell32.DragQueryFileW.restype = ctypes.wintypes.UINT
+shell32.DragFinish.argtypes = [ctypes.wintypes.HANDLE]
+shell32.DragFinish.restype = None
+
+# Window procedure type
+WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.wintypes.HWND,
+                              ctypes.wintypes.UINT, ctypes.wintypes.WPARAM,
+                              ctypes.wintypes.LPARAM)
+
+# Store original window procedure and callback reference
+_original_wndproc = None
+_wndproc_ref = None
+_app_ref = None
+
+
+def _new_wndproc(hwnd, msg, wparam, lparam):
+    """Custom window procedure to handle WM_DROPFILES."""
+    if msg == WM_DROPFILES and _app_ref is not None:
+        # Get number of files dropped
+        num_files = shell32.DragQueryFileW(wparam, 0xFFFFFFFF, None, 0)
+        if num_files > 0:
+            # Get first file path
+            buf = ctypes.create_unicode_buffer(520)
+            shell32.DragQueryFileW(wparam, 0, buf, 520)
+            file_path = buf.value
+            if file_path and file_path.lower().endswith('.xef'):
+                _app_ref.input_file.set(file_path)
+        shell32.DragFinish(wparam)
+        return 0
+    elif msg == WM_DESTROY:
+        # Restore original window procedure before destroy
+        if _original_wndproc:
+            user32.SetWindowLongPtrW(hwnd, GWL_WNDPROC, _original_wndproc)
+        user32.PostQuitMessage(0)
+        return 0
+
+    # Call original window procedure
+    if _original_wndproc:
+        return user32.CallWindowProcW(_original_wndproc, hwnd, msg, wparam, lparam)
+    return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+
+
+def setup_drag_drop(root, app):
+    """Enable drag-and-drop for .xef files on the tkinter window.
+
+    Args:
+        root: tkinter root window
+        app: XEF2JPEGApp instance
+    """
+    global _original_wndproc, _wndproc_ref, _app_ref
+
+    _app_ref = app
+
+    # Get the window handle
+    hwnd = ctypes.wintypes.HWND(root.winfo_id())
+
+    # Accept drag-and-drop files
+    shell32.DragAcceptFiles(hwnd, True)
+
+    # Store original window procedure
+    _original_wndproc = user32.GetWindowLongPtrW(hwnd, GWL_WNDPROC)
+
+    # Create new window procedure (must keep reference to prevent GC)
+    _wndproc_ref = WNDPROC(_new_wndproc)
+    user32.SetWindowLongPtrW(hwnd, GWL_WNDPROC, _wndproc_ref)
 
 
 def check_kinect_sdk():
@@ -59,10 +173,15 @@ class XEF2JPEGApp:
         self.root = root
         self.root.title("XEF2JPEG - Kinect V2 to JPEG Converter")
         self.root.geometry("600x450")
+        self.root.minsize(500, 350)
+
+        # Load saved settings
+        self.settings = load_settings()
 
         # Application state
         self.input_file = tk.StringVar()
-        self.output_directory = tk.StringVar(value=str(Path.cwd() / "XEF2JPEG_Output"))
+        default_output = self.settings.get('last_output_dir', str(Path.cwd() / "XEF2JPEG_Output"))
+        self.output_directory = tk.StringVar(value=default_output)
         self.stream_mode = tk.StringVar(value="depth_ir")
         self.is_converting = False
 
@@ -73,6 +192,9 @@ class XEF2JPEGApp:
         self.sdk_installed, self.sdk_message = check_kinect_sdk()
         if not self.sdk_installed:
             self.root.after(500, self._show_sdk_info)
+
+        # Setup drag-and-drop support
+        self.root.after(100, lambda: setup_drag_drop(self.root, self))
 
     def setup_ui(self):
         """Setup the user interface."""
@@ -135,22 +257,30 @@ class XEF2JPEGApp:
 
     def browse_input_file(self):
         """Open file dialog to select input XEF file."""
+        initial_dir = self.settings.get('last_input_dir', str(Path.cwd()))
         filename = filedialog.askopenfilename(
             title="Select XEF File",
-            initialdir=str(Path.cwd()),
+            initialdir=initial_dir,
             filetypes=[("XEF files", "*.xef"), ("All files", "*.*")]
         )
         if filename:
             self.input_file.set(filename)
+            # Save the directory for next session
+            self.settings['last_input_dir'] = str(Path(filename).parent)
+            save_settings(self.settings)
 
     def browse_output_directory(self):
         """Open directory dialog to select output directory."""
+        initial_dir = self.settings.get('last_output_dir', str(Path.cwd()))
         directory = filedialog.askdirectory(
             title="Select Output Directory",
-            initialdir=str(Path.cwd())
+            initialdir=initial_dir
         )
         if directory:
             self.output_directory.set(directory)
+            # Save the directory for next session
+            self.settings['last_output_dir'] = directory
+            save_settings(self.settings)
 
     def start_conversion(self):
         """Start the XEF to JPEG conversion process."""
@@ -228,8 +358,25 @@ class XEF2JPEGApp:
 
 def main():
     """Main entry point."""
+    # Enable DPI awareness on Windows for proper scaling (feat-081)
+    if sys.platform == 'win32':
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except (AttributeError, OSError):
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except (AttributeError, OSError):
+                pass
+
     root = tk.Tk()
     app = XEF2JPEGApp(root)
+
+    # Support command-line argument for input file
+    if len(sys.argv) > 1:
+        input_path = sys.argv[1]
+        if os.path.isfile(input_path):
+            app.input_file.set(input_path)
+
     root.mainloop()
 
 

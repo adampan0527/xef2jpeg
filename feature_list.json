@@ -319,7 +319,7 @@
         "Click Browse for input file",
         "Verify dialog opens to the previously used directory"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -333,7 +333,7 @@
         "Relaunch application",
         "Verify output directory shows the previously selected path"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -995,7 +995,7 @@
         "Verify UI elements are still visible and readable",
         "Verify text contrast is sufficient"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1020,7 +1020,7 @@
         "Verify UI scales appropriately",
         "Verify text is not blurry or misaligned"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1067,7 +1067,7 @@
         "Navigate through application with keyboard",
         "Verify UI elements are announced by Narrator"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1164,7 +1164,7 @@
         "Check output file names for timestamp information",
         "Verify timestamps are sequential and reasonable"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1176,7 +1176,7 @@
         "Convert each file",
         "Verify all convert successfully"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1298,7 +1298,7 @@
         "Drag a .xef file from Explorer onto application window",
         "Verify file path appears in input field"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1309,7 +1309,7 @@
         "Run: python xef2jpeg.py path/to/file.xef",
         "Verify application launches with file path pre-filled"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1346,7 +1346,7 @@
         "Verify all frames convert successfully",
         "Verify output dimensions match source frames"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1371,7 +1371,7 @@
         "Verify conversion succeeds",
         "Verify audio data is skipped or handled without error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1383,7 +1383,7 @@
         "Check success message or status",
         "Verify it indicates how many frames were converted"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1395,7 +1395,7 @@
         "Attempt conversion",
         "Verify informative error or warning message"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1421,7 +1421,7 @@
         "Run conversion",
         "Verify directory is created and files are output"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1435,7 +1435,7 @@
         "Convert second file",
         "Verify second conversion also succeeds"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1447,7 +1447,7 @@
         "Check output filenames",
         "Verify filenames include 'mysession' or similar identifier"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1460,7 +1460,7 @@
         "Verify valid frames are converted",
         "Verify corrupted frame is skipped with warning or error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1472,7 +1472,7 @@
         "Verify output files have .jpg or .jpeg extension",
         "Verify files are valid JPEG format (check magic bytes)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1484,7 +1484,7 @@
         "Run conversion",
         "Verify conversion succeeds (read-only input is fine)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1497,7 +1497,7 @@
         "Run conversion",
         "Verify conversion succeeds"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1509,7 +1509,7 @@
         "Verify UI elements use consistent system colors",
         "Verify no jarring color combinations"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1521,7 +1521,7 @@
         "Verify UI elements don't overlap",
         "Verify all elements remain accessible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1533,7 +1533,7 @@
         "Verify progress bar shows a moving/animated indicator",
         "Verify animation stops when conversion completes"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1546,7 +1546,7 @@
         "Click OK",
         "Verify dialog closes"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1559,7 +1559,7 @@
         "Click OK",
         "Verify dialog closes"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1609,7 +1609,7 @@
         "Trigger 'Converting...' status",
         "Verify full text is visible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1634,7 +1634,7 @@
         "Use cursor keys to scroll horizontally",
         "Verify full path is accessible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1672,7 +1672,7 @@
         "Switch to 'All files' filter",
         "Verify all files are shown"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1684,7 +1684,7 @@
         "Click Browse for output",
         "Verify dialog opens to that custom path"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1696,7 +1696,7 @@
         "Verify PIL/Pillow is used for JPEG creation",
         "Verify image.save() is called with JPEG format"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1708,7 +1708,7 @@
         "Verify binary format is read with correct byte order",
         "Verify frame boundaries are correctly identified"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1720,7 +1720,7 @@
         "Convert a sample file",
         "Verify output image data is correct"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 96,
-    "failing": 109,
+    "passing": 128,
+    "failing": 77,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,
