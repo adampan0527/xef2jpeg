@@ -13,6 +13,7 @@ import sys
 import json
 import ctypes
 import ctypes.wintypes
+import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
@@ -184,6 +185,8 @@ class XEF2JPEGApp:
         self.output_directory = tk.StringVar(value=default_output)
         self.stream_mode = tk.StringVar(value="depth_ir")
         self.is_converting = False
+        self.cancel_event = threading.Event()
+        self._conversion_thread = None
 
         # Setup UI
         self.setup_ui()
@@ -246,10 +249,17 @@ class XEF2JPEGApp:
         status_label = ttk.Label(main_frame, textvariable=self.status_var)
         status_label.grid(row=5, column=0, columnspan=3, pady=5)
 
-        # Convert button
-        self.convert_button = ttk.Button(main_frame, text="Start Conversion",
+        # Button frame (holds Convert and Cancel buttons side by side)
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=6, column=0, columnspan=3, pady=10)
+
+        self.convert_button = ttk.Button(button_frame, text="Start Conversion",
                                         command=self.start_conversion)
-        self.convert_button.grid(row=6, column=0, columnspan=3, pady=10)
+        self.convert_button.pack(side=tk.LEFT, padx=5)
+
+        self.cancel_button = ttk.Button(button_frame, text="Cancel",
+                                       command=self.cancel_conversion, state='disabled')
+        self.cancel_button.pack(side=tk.LEFT, padx=5)
 
     def _show_sdk_info(self):
         """Show Kinect SDK status information on startup."""
@@ -299,24 +309,35 @@ class XEF2JPEGApp:
 
         # Disable UI during conversion
         self.is_converting = True
+        self.cancel_event.clear()
         self.convert_button.config(state='disabled')
+        self.cancel_button.config(state='normal')
         self.progress.start()
         self.status_var.set("Converting...")
 
-        # Perform conversion (placeholder - actual implementation needed)
-        self.root.after(100, self.perform_conversion)
+        # Run conversion in background thread
+        self._conversion_thread = threading.Thread(target=self._conversion_worker, daemon=True)
+        self._conversion_thread.start()
 
-    def perform_conversion(self):
-        """Perform the actual XEF to JPEG conversion."""
+    def cancel_conversion(self):
+        """Cancel the current conversion."""
+        if self.is_converting:
+            self.cancel_event.set()
+            self.status_var.set("Cancelling...")
+            self.cancel_button.config(state='disabled')
+
+    def _update_status(self, message):
+        """Thread-safe status update."""
+        self.root.after(0, lambda: self.status_var.set(message))
+
+    def _conversion_worker(self):
+        """Background worker thread for XEF to JPEG conversion."""
         try:
-            # Update status
-            self.status_var.set("Parsing XEF file...")
-            self.root.update()
-
-            # Define progress callback
+            # Define progress callback (thread-safe)
             def progress_callback(progress, message):
-                self.status_var.set(message)
-                self.root.update()
+                if self.cancel_event.is_set():
+                    raise InterruptedError("Conversion cancelled by user")
+                self._update_status(message)
 
             # Determine target streams based on selection
             mode = self.stream_mode.get()
@@ -336,23 +357,49 @@ class XEF2JPEGApp:
                 callback=progress_callback
             )
 
-            # Show success message with stream type info
+            # Check if cancelled before showing success
+            if self.cancel_event.is_set():
+                self.root.after(0, lambda: self._conversion_finished(
+                    cancelled=True))
+                return
+
+            # Schedule success dialog on main thread
             file_count = len(saved_files)
             stream_names = ", ".join(frame_types)
-            messagebox.showinfo("Success",
-                              f"Conversion completed successfully!\n\n"
-                              f"Stream types: {stream_names}\n"
-                              f"Frames converted: {file_count}\n"
-                              f"Output saved to:\n{output_folder}")
+            self.root.after(0, lambda: self._conversion_finished(
+                success=True,
+                message=f"Conversion completed successfully!\n\n"
+                        f"Stream types: {stream_names}\n"
+                        f"Frames converted: {file_count}\n"
+                        f"Output saved to:\n{output_folder}"))
+
+        except InterruptedError:
+            self.root.after(0, lambda: self._conversion_finished(cancelled=True))
 
         except Exception as e:
-            messagebox.showerror("Error", f"Conversion failed: {str(e)}")
+            self.root.after(0, lambda: self._conversion_finished(
+                error=str(e)))
 
-        finally:
-            # Re-enable UI
-            self.is_converting = False
-            self.convert_button.config(state='normal')
-            self.progress.stop()
+    def _conversion_finished(self, success=False, error=None, cancelled=False,
+                            message=""):
+        """Handle conversion completion on the main thread."""
+        # Re-enable UI
+        self.is_converting = False
+        self._conversion_thread = None
+        self.convert_button.config(state='normal')
+        self.cancel_button.config(state='disabled')
+        self.progress.stop()
+
+        if cancelled:
+            self.status_var.set("Cancelled")
+            messagebox.showinfo("Cancelled", "Conversion was cancelled.")
+        elif success:
+            self.status_var.set("Ready")
+            messagebox.showinfo("Success", message)
+        elif error:
+            self.status_var.set("Ready")
+            messagebox.showerror("Error", f"Conversion failed: {error}")
+        else:
             self.status_var.set("Ready")
 
 

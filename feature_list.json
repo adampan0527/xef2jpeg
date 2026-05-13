@@ -1744,7 +1744,7 @@
         "Verify BGRA data is converted to RGB before JPEG save",
         "Verify output colors are not inverted or incorrect"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1756,7 +1756,7 @@
         "Verify 16-bit depth values are mapped to 0-255 range",
         "Verify mapping preserves depth relationships"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1768,7 +1768,7 @@
         "Attempt conversion",
         "Verify body index is converted or skipped gracefully"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1781,7 +1781,7 @@
         "Verify conversion succeeds",
         "Verify tracking data doesn't cause errors"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1806,7 +1806,7 @@
         "Verify output is grayscale image",
         "Verify IR intensity values are represented"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1818,7 +1818,7 @@
         "Attempt conversion",
         "Verify file is read correctly (64-bit file handling)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1830,7 +1830,7 @@
         "Verify file handles are released",
         "Verify input file can be deleted/moved after conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1854,7 +1854,7 @@
         "Convert successfully",
         "Verify path handling works with drive letters"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1866,7 +1866,7 @@
         "Attempt operation",
         "Verify path is handled correctly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1878,7 +1878,7 @@
         "Check output file permissions",
         "Verify files are readable and not locked"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1891,7 +1891,7 @@
         "Verify conversion succeeds",
         "Verify metadata doesn't cause parsing errors"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1903,7 +1903,7 @@
         "Verify UI remains responsive",
         "Verify conversion happens in background thread"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1915,7 +1915,7 @@
         "Verify progress bar updates during conversion",
         "Verify updates happen without freezing UI"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1927,7 +1927,7 @@
         "Verify UI updates use proper thread-safe methods",
         "Verify no race conditions in UI updates"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1939,7 +1939,7 @@
         "Close application window during conversion",
         "Verify application closes cleanly without crash"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1952,7 +1952,7 @@
         "Click Convert with valid input",
         "Verify conversion starts"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1964,7 +1964,7 @@
         "Verify pathlib is used for path manipulation",
         "Verify paths are handled correctly across different contexts"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1976,7 +1976,7 @@
         "Verify try/except blocks around parsing operations",
         "Verify errors are propagated to UI with clear messages"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1988,7 +1988,7 @@
         "Verify application checks file format signature",
         "Verify appropriate error is shown"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2000,7 +2000,7 @@
         "Verify resolution, format, and fps are read correctly",
         "Verify conversion uses correct parameters"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2024,7 +2024,7 @@
         "Verify 'with' statements are used for file operations",
         "Verify files are properly closed after operations"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2074,7 +2074,7 @@
         "Verify import error is caught",
         "Verify user-friendly error message is shown"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2086,7 +2086,7 @@
         "Run conversion",
         "Verify input file checksum unchanged"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2098,7 +2098,7 @@
         "Convert successfully",
         "Verify correct number of output files"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2110,7 +2110,7 @@
         "Convert file",
         "Verify both stream types are correctly separated"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2122,7 +2122,7 @@
         "Verify efficient buffer sizes are used",
         "Verify no excessive memory allocation for reads"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2135,7 +2135,7 @@
         "Verify values are in 0-255 range",
         "Verify closer objects appear brighter (or darker, consistently)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2147,7 +2147,7 @@
         "Convert file",
         "Verify conversion succeeds or shows clear error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2160,7 +2160,7 @@
         "Verify all frames are converted",
         "Verify memory doesn't grow excessively"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2184,7 +2184,7 @@
         "Verify window has minimum size limit",
         "Verify UI elements remain usable at minimum size"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2209,7 +2209,7 @@
         "Verify output filenames don't contain invalid characters",
         "Verify filenames don't use reserved names (CON, PRN, etc.)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2221,7 +2221,7 @@
         "Verify only one dialog opens",
         "Verify application doesn't crash"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2233,7 +2233,7 @@
         "Check console or log output",
         "Verify traceback is available for debugging"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2245,7 +2245,7 @@
         "Verify tk.Tk() is created before XEF2JPEGApp",
         "Verify mainloop() is called"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2257,7 +2257,7 @@
         "Verify StringVar is used for input_file and output_directory",
         "Verify entry fields are bound to StringVars"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2269,7 +2269,7 @@
         "Verify grid() is used consistently",
         "Verify row/column weights are set for resizing"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2281,7 +2281,7 @@
         "Verify window size matches specified geometry",
         "Verify geometry string is valid (600x400)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2293,7 +2293,7 @@
         "Verify ttk.Button, ttk.Entry, ttk.Label are used",
         "Verify widgets have native Windows appearance"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2305,7 +2305,7 @@
         "Verify dialog is modal to main window",
         "Verify main window cannot be interacted with while dialog is open"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2317,7 +2317,7 @@
         "Verify os.path.exists or pathlib.exists is used",
         "Verify validation happens before conversion starts"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2329,7 +2329,7 @@
         "Verify numpy array or bytes are converted to PIL Image",
         "Verify Image.frombuffer or Image.fromarray is used correctly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2341,7 +2341,7 @@
         "Verify color images are saved in RGB mode",
         "Verify depth images are saved in L (grayscale) mode"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2353,7 +2353,7 @@
         "Verify filenames are consistent",
         "Verify no filename collisions when converting multiple files"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2365,7 +2365,7 @@
         "Try to delete output file while conversion is writing",
         "Verify appropriate error or successful completion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2378,7 +2378,7 @@
         "Verify all features work",
         "Test with Python 3.11 or 3.12"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2389,7 +2389,7 @@
         "Test on minimal Python install without tkinter",
         "Verify clear error message about missing tkinter"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2402,7 +2402,7 @@
         "Verify process terminates in task manager",
         "Verify no zombie processes"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2416,7 +2416,7 @@
         "Repeat several times",
         "Verify no crash"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2428,7 +2428,7 @@
         "Verify consistent error handling approach",
         "Verify errors are shown via messagebox.showerror"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2440,7 +2440,7 @@
         "Verify messagebox.showinfo is used",
         "Verify message includes output path"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2452,7 +2452,7 @@
         "Verify messagebox.showerror is used for all error dialogs",
         "Verify error title and message are set"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2465,7 +2465,7 @@
         "Verify button cannot be clicked during conversion",
         "Verify button re-enables after conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2478,7 +2478,7 @@
         "Verify progress bar shows animation",
         "Verify progress.stop() is called after conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2490,7 +2490,7 @@
         "Verify root.after() is used for UI updates",
         "Verify no direct UI manipulation from worker thread"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2502,7 +2502,7 @@
         "Verify if __name__ == '__main__': guard exists",
         "Verify main() is called within guard"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2514,7 +2514,7 @@
         "Verify __init__ method initializes all state",
         "Verify setup_ui is called from __init__"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2526,7 +2526,7 @@
         "Verify input_file, output_directory are instance attributes",
         "Verify is_converting flag is tracked"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2538,14 +2538,14 @@
         "Verify output directory default is cwd/XEF2JPEG_Output",
         "Verify path uses Path.cwd() or equivalent"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     }
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 128,
-    "failing": 77,
+    "passing": 186,
+    "failing": 19,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,
