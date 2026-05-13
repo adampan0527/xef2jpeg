@@ -16,6 +16,41 @@ from pathlib import Path
 from xef_parser import convert_xef_to_jpeg
 
 
+def check_kinect_sdk():
+    """Check if Kinect for Windows SDK 2.0 is installed.
+
+    Returns:
+        Tuple of (is_installed: bool, message: str)
+    """
+    # Check for Kinect SDK registry key (Windows)
+    if sys.platform == 'win32':
+        try:
+            import winreg
+            key_path = r"SOFTWARE\Microsoft\Kinect\v2.0"
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path):
+                return True, "Kinect for Windows SDK 2.0 is installed."
+        except (OSError, ImportError):
+            pass
+
+    # Check common installation paths
+    program_files = os.environ.get('ProgramFiles', r'C:\Program Files')
+    sdk_paths = [
+        Path(program_files) / "Microsoft SDKs" / "Kinect" / "v2.0",
+        Path(program_files) / "Microsoft Kinect" / "v2.0",
+    ]
+    for sdk_path in sdk_paths:
+        if sdk_path.exists():
+            return True, "Kinect for Windows SDK 2.0 is installed."
+
+    return False, (
+        "Kinect for Windows SDK 2.0 was not detected on this system.\n\n"
+        "Note: The Kinect SDK is NOT required for XEF to JPEG conversion.\n"
+        "This application uses its own parser to read XEF files directly.\n\n"
+        "If you encounter issues with specific XEF files, installing the\n"
+        "Kinect SDK may help with additional format support."
+    )
+
+
 class XEF2JPEGApp:
     """Main application class for XEF to JPEG conversion."""
 
@@ -33,6 +68,11 @@ class XEF2JPEGApp:
 
         # Setup UI
         self.setup_ui()
+
+        # Check for Kinect SDK on startup
+        self.sdk_installed, self.sdk_message = check_kinect_sdk()
+        if not self.sdk_installed:
+            self.root.after(500, self._show_sdk_info)
 
     def setup_ui(self):
         """Setup the user interface."""
@@ -88,6 +128,10 @@ class XEF2JPEGApp:
         self.convert_button = ttk.Button(main_frame, text="Start Conversion",
                                         command=self.start_conversion)
         self.convert_button.grid(row=6, column=0, columnspan=3, pady=10)
+
+    def _show_sdk_info(self):
+        """Show Kinect SDK status information on startup."""
+        messagebox.showinfo("Kinect SDK Status", self.sdk_message)
 
     def browse_input_file(self):
         """Open file dialog to select input XEF file."""

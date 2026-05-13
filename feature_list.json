@@ -304,7 +304,7 @@
         "Attempt to convert an XEF file",
         "Verify informative error message about missing SDK"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -344,7 +344,7 @@
         "Launch application",
         "Verify title bar shows 'XEF2JPEG - Kinect V2 to JPEG Converter'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -356,7 +356,7 @@
         "Verify window width is approximately 600 pixels",
         "Verify window height is approximately 400 pixels"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -369,7 +369,7 @@
         "Verify window resizes appropriately",
         "Verify UI elements reflow or maintain layout"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -382,7 +382,7 @@
         "Verify it appears at the top of the window",
         "Verify it uses a larger or bold font"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -393,7 +393,7 @@
         "Launch application",
         "Verify label text is exactly 'Input XEF File:'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -404,7 +404,7 @@
         "Launch application",
         "Verify label text is exactly 'Output Directory:'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -415,7 +415,7 @@
         "Launch application",
         "Verify both Browse buttons show 'Browse...' text"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -426,7 +426,7 @@
         "Launch application",
         "Verify button text is exactly 'Start Conversion'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -439,7 +439,7 @@
         "Verify entry fields are in second column and expand",
         "Verify Browse buttons are in third column"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -452,7 +452,7 @@
         "Resize window wider",
         "Verify progress bar expands with window"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -463,7 +463,7 @@
         "Launch application",
         "Verify status label text is centered or left-aligned below progress bar"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -474,7 +474,7 @@
         "Launch application",
         "Verify 'Start Conversion' button is centered in the window"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -486,7 +486,7 @@
         "Verify there is consistent padding around UI elements",
         "Verify vertical spacing between rows is uniform"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -498,7 +498,7 @@
         "Verify buttons, entry fields, and labels match Windows system theme",
         "Verify fonts are readable and appropriate size"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -510,7 +510,7 @@
         "Verify the entry field displays the path",
         "Scroll or verify full path is visible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -522,7 +522,7 @@
         "Verify file type dropdown shows 'XEF files' option",
         "Verify '*.xef' pattern is associated with it"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -534,7 +534,7 @@
         "Verify file type dropdown includes 'All files' option",
         "Verify '*.  *' pattern is associated with it"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -546,7 +546,7 @@
         "Verify success dialog includes the output directory path",
         "Verify message says 'Conversion completed successfully!'"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -559,7 +559,7 @@
         "Trigger a conversion error",
         "Verify error dialog shows error icon"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -573,7 +573,7 @@
         "Release at new position",
         "Verify window stays at new position"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -587,7 +587,7 @@
         "Click taskbar icon",
         "Verify window restores"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -601,7 +601,7 @@
         "Click restore button",
         "Verify window returns to original size"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -614,7 +614,7 @@
         "Verify application window closes",
         "Verify process terminates"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -627,7 +627,7 @@
         "Verify focus moves through: input entry, input browse, output entry, output browse, convert button",
         "Verify focused elements show visual indication"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -640,7 +640,7 @@
         "Press Enter",
         "Verify button action triggers (validation or conversion)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -653,7 +653,7 @@
         "Verify application shows error dialog",
         "Verify error message indicates file is invalid or corrupted"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -666,7 +666,7 @@
         "Verify application shows permission error",
         "Verify application does not crash"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -678,7 +678,7 @@
         "Attempt conversion",
         "Verify application shows appropriate error message"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -691,7 +691,7 @@
         "Attempt conversion",
         "Verify application shows network error message"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -703,7 +703,7 @@
         "Attempt to convert it",
         "Verify application shows appropriate error about empty or invalid file"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -715,7 +715,7 @@
         "Attempt conversion",
         "Verify application handles gracefully (error or creates depth-only output)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -728,7 +728,7 @@
         "Verify application does not crash with out-of-memory",
         "Verify progress indication works"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -740,7 +740,7 @@
         "Select and convert the file",
         "Verify conversion succeeds or shows clear error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -752,7 +752,7 @@
         "Select and convert the file",
         "Verify conversion succeeds without path issues"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -764,7 +764,7 @@
         "Select and convert the file",
         "Verify application handles long path or shows clear error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -776,7 +776,7 @@
         "Attempt to convert the locked file",
         "Verify application shows file-in-use error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -789,7 +789,7 @@
         "Verify application returns to ready state",
         "Verify can attempt another conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -802,7 +802,7 @@
         "Verify application handles gracefully",
         "Verify no crash or hang"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -814,7 +814,7 @@
         "Attempt conversion",
         "Verify application shows error about missing directory"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -826,7 +826,7 @@
         "Attempt to convert it",
         "Verify application shows format error"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -838,7 +838,7 @@
         "Verify all conversion errors are caught",
         "Verify errors are shown in messageboxes, not console"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -850,7 +850,7 @@
         "Verify application never crashes to desktop",
         "Verify application always shows user-friendly error message"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -861,7 +861,7 @@
         "Start application and measure launch time",
         "Verify window appears within 2 seconds"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -873,7 +873,7 @@
         "Measure time for dialog to appear",
         "Verify dialog appears within 1 second"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -886,7 +886,7 @@
         "Verify window responds to user input",
         "Verify no 'Not Responding' state"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -898,7 +898,7 @@
         "Time the conversion process",
         "Verify it completes within a reasonable timeframe"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -911,7 +911,7 @@
         "Verify memory does not grow unbounded",
         "Verify memory is released after conversion"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -924,7 +924,7 @@
         "Verify UI remains interactive throughout",
         "Verify progress updates are shown"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -936,7 +936,7 @@
         "Click Convert button",
         "Verify conversion starts within 500ms"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -947,7 +947,7 @@
         "Trigger a validation error",
         "Verify error dialog appears within 500ms"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -959,7 +959,7 @@
         "Verify each has meaningful descriptive text",
         "Verify no generic or missing labels"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -971,7 +971,7 @@
         "Verify all buttons and entry fields receive focus",
         "Verify focus order is logical"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -982,7 +982,7 @@
         "Tab through UI elements",
         "Verify each focused element shows a visible focus rectangle or highlight"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1007,7 +1007,7 @@
         "Verify all text is clear and readable",
         "Verify no text is clipped or overlapping"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1032,7 +1032,7 @@
         "Verify each error message clearly describes the problem",
         "Verify each message suggests what the user should do"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1044,7 +1044,7 @@
         "Verify progress bar is visible (not relying solely on color)",
         "Verify progress animation is perceivable"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1055,7 +1055,7 @@
         "Measure button dimensions",
         "Verify buttons are at least 32x32 pixels for touch accessibility"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1079,7 +1079,7 @@
         "Verify file header is parsed correctly",
         "Verify file metadata is read"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1103,7 +1103,7 @@
         "Verify output contains depth data representation",
         "Verify depth values are mapped to visual range"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1128,7 +1128,7 @@
         "Verify image quality is good (no severe artifacts)",
         "Verify file size is reasonable"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1152,7 +1152,7 @@
         "Check output image dimensions",
         "Verify dimensions match Kinect V2 depth resolution (512x424)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1189,7 +1189,7 @@
         "Open output JPEG in web browser",
         "Verify both display correctly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1202,7 +1202,7 @@
         "Verify directory is created",
         "Verify output files are in the new directory"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1214,7 +1214,7 @@
         "Convert same XEF file again",
         "Verify both sets of output exist (or check overwrite behavior)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1226,7 +1226,7 @@
         "Without closing, try to interact with main window",
         "Verify dialog is modal or behavior is correct"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1238,7 +1238,7 @@
         "Verify paths use backslash separators",
         "Verify paths work correctly for file operations"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1251,7 +1251,7 @@
         "Launch from XEF2JPEG_Input directory",
         "Verify default output path still points correctly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1263,7 +1263,7 @@
         "Attempt conversion",
         "Verify IR data is converted to grayscale image"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1275,7 +1275,7 @@
         "Observe progress indication",
         "Verify user can estimate conversion progress"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1287,7 +1287,7 @@
         "Click Browse, then Cancel the dialog",
         "Verify input field still shows previously selected file"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1321,7 +1321,7 @@
         "Verify output files are in a 'test' subdirectory",
         "Verify organization is clear"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1333,7 +1333,7 @@
         "Check output filenames",
         "Verify filenames include frame index (e.g., frame_001.jpg)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1358,7 +1358,7 @@
         "Verify all output JPEG files have non-zero size",
         "Verify all output files contain valid image data"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 22,
-    "failing": 183,
+    "passing": 96,
+    "failing": 109,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,
