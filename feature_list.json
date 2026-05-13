@@ -2540,12 +2540,38 @@
       ],
       "passes": true,
       "priority": "high"
+    },
+    {
+      "id": "feat-206",
+      "category": "performance",
+      "description": "Application shows conversion progress with tqdm in command line",
+      "steps": [
+        "Run conversion from command line",
+        "Verify tqdm progress bar appears in terminal",
+        "Verify progress bar updates as frames are converted",
+        "Verify progress bar shows frame count and percentage"
+      ],
+      "passes": false,
+      "priority": "medium"
+    },
+    {
+      "id": "feat-207",
+      "category": "documentation",
+      "description": "Application has Chinese README documentation (README_CN.md)",
+      "steps": [
+        "Verify README_CN.md exists in project root",
+        "Verify README_CN.md is written in Chinese",
+        "Verify README_CN.md covers installation, usage, and features",
+        "Verify README_CN.md references the same project structure as README.md"
+      ],
+      "passes": false,
+      "priority": "medium"
     }
   ],
   "metadata": {
-    "total_features": 205,
+    "total_features": 207,
     "passing": 203,
-    "failing": 2,
+    "failing": 4,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,

@@ -27,6 +27,11 @@ import numpy as np
 from pathlib import Path
 from PIL import Image, JpegImagePlugin
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,8 +91,12 @@ class XEFParser:
         self.max_frames = max_frames
         self.target_streams = target_streams if target_streams is not None else [self.STREAM_DEPTH, self.STREAM_IR]
 
-    def parse(self):
-        """Parse XEF file and extract frames from target streams."""
+    def parse(self, use_tqdm=True):
+        """Parse XEF file and extract frames from target streams.
+
+        Args:
+            use_tqdm: Show tqdm progress bar in terminal (default True)
+        """
         with open(self.filepath, 'rb') as f:
             # 1. Read and validate file header
             self._read_header(f)
@@ -99,7 +108,7 @@ class XEFParser:
             event_start = self._find_event_data_start(f)
 
             # 4. Extract frames sequentially from event data
-            self._extract_frames_sequential(f, event_start)
+            self._extract_frames_sequential(f, event_start, use_tqdm=use_tqdm)
 
         return self.frames
 
@@ -275,12 +284,17 @@ class XEFParser:
 
         return True
 
-    def _extract_frames_sequential(self, f, start_offset):
+    def _extract_frames_sequential(self, f, start_offset, use_tqdm=True):
         """
         Extract frames by sequentially reading segment descriptors and data.
 
         Starting from start_offset, read 32-byte descriptors, validate them,
         and for target stream types, read and store the frame data.
+
+        Args:
+            f: Open file object
+            start_offset: Starting offset for event data
+            use_tqdm: Show tqdm progress bar in terminal
         """
         f.seek(0)
         file_size = f.seek(0, 2)
@@ -291,46 +305,71 @@ class XEFParser:
 
         offset = start_offset
 
-        while offset < file_size - self.SEGMENT_DESC_SIZE:
-            # Check if we have enough frames
-            if max_per_stream is not None:
-                if all(frame_counts[st] >= max_per_stream for st in self.target_streams):
+        # Set up progress bar
+        pbar = None
+        if use_tqdm and tqdm is not None:
+            try:
+                pbar = tqdm(
+                    desc=f"Extracting frames",
+                    unit=" frames",
+                    dynamic_ncols=True,
+                    leave=False
+                )
+            except Exception:
+                pbar = None
+
+        try:
+            while offset < file_size - self.SEGMENT_DESC_SIZE:
+                # Check if we have enough frames
+                if max_per_stream is not None:
+                    if all(frame_counts[st] >= max_per_stream for st in self.target_streams):
+                        break
+
+                f.seek(offset)
+                desc = f.read(self.SEGMENT_DESC_SIZE)
+                if len(desc) < self.SEGMENT_DESC_SIZE:
                     break
 
-            f.seek(offset)
-            desc = f.read(self.SEGMENT_DESC_SIZE)
-            if len(desc) < self.SEGMENT_DESC_SIZE:
-                break
+                if not self._is_valid_segment(desc, file_size):
+                    # Invalid segment - try next byte alignment
+                    offset += 4
+                    continue
 
-            if not self._is_valid_segment(desc, file_size):
-                # Invalid segment - try next byte alignment
-                offset += 4
-                continue
+                stream_type, frame_size, session_id, seg_counter, frame_size2, event_index, padding = \
+                    struct.unpack_from('<IIQIIII', desc)
 
-            stream_type, frame_size, session_id, seg_counter, frame_size2, event_index, padding = \
-                struct.unpack_from('<IIQIIII', desc)
+                # Validate that frame data fits within file
+                data_start = offset + self.SEGMENT_DESC_SIZE
+                if data_start + frame_size > file_size:
+                    break
 
-            # Validate that frame data fits within file
-            data_start = offset + self.SEGMENT_DESC_SIZE
-            if data_start + frame_size > file_size:
-                break
+                # Extract frame if it's a target stream type
+                if stream_type in self.target_streams:
+                    if max_per_stream is None or frame_counts[stream_type] < max_per_stream:
+                        f.seek(data_start)
+                        frame_data = f.read(frame_size)
 
-            # Extract frame if it's a target stream type
-            if stream_type in self.target_streams:
-                if max_per_stream is None or frame_counts[stream_type] < max_per_stream:
-                    f.seek(data_start)
-                    frame_data = f.read(frame_size)
+                        if len(frame_data) == frame_size:
+                            frame_info = self._process_frame(
+                                stream_type, frame_data, frame_counts[stream_type], seg_counter, event_index
+                            )
+                            if frame_info:
+                                self.frames.append(frame_info)
+                                frame_counts[stream_type] += 1
 
-                    if len(frame_data) == frame_size:
-                        frame_info = self._process_frame(
-                            stream_type, frame_data, frame_counts[stream_type], seg_counter, event_index
-                        )
-                        if frame_info:
-                            self.frames.append(frame_info)
-                            frame_counts[stream_type] += 1
+                                if pbar is not None:
+                                    pbar.update(1)
+                                    pbar.set_postfix({
+                                        st: frame_counts[st]
+                                        for st in self.target_streams
+                                        if frame_counts[st] > 0
+                                    })
 
-            # Move to next segment
-            offset = data_start + frame_size
+                # Move to next segment
+                offset = data_start + frame_size
+        finally:
+            if pbar is not None:
+                pbar.close()
 
     def _process_frame(self, stream_type, raw_data, frame_index, seg_counter, event_index):
         """Process raw frame data into a normalized image array."""
@@ -556,7 +595,7 @@ class XEFParser:
         return any(s['type'] == stream_type for s in self.streams)
 
 
-def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=None, callback=None, quality=95):
+def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=None, callback=None, quality=95, use_tqdm=True):
     """
     Convert XEF file to JPEG images.
 
@@ -573,6 +612,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
         target_streams: List of stream types to extract (default: [3, 4] = depth, ir)
         callback: Optional callback function(progress, message)
         quality: JPEG quality (1-100, default 95)
+        use_tqdm: Show tqdm progress bar in terminal (default True)
 
     Returns:
         Tuple of (stream_types_found, saved_file_paths, output_folder_path)
@@ -592,7 +632,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
         callback(0.0, "Validating XEF file...")
 
     parser = XEFParser(xef_path, max_frames=max_frames, target_streams=target_streams)
-    parser.parse()
+    parser.parse(use_tqdm=use_tqdm)
 
     if callback:
         stream_info = parser.get_stream_info()
