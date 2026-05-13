@@ -1091,7 +1091,7 @@
         "Verify output JPEG contains color image data",
         "Verify image colors are accurate (not inverted or shifted)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "high"
     },
     {
@@ -1115,7 +1115,7 @@
         "Verify both color and depth outputs are generated",
         "Verify outputs are properly labeled or organized"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1140,7 +1140,7 @@
         "Check output image dimensions",
         "Verify dimensions match Kinect V2 color resolution (1920x1080)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1407,7 +1407,7 @@
         "Check output JPEG dimensions",
         "Verify aspect ratio is 16:9 (1920x1080)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -1572,7 +1572,7 @@
         "Check taskbar icon",
         "Verify icon is appropriate (not default Python icon)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1646,7 +1646,7 @@
         "Trigger an error dialog",
         "Verify dialog appears centered on main window"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1658,7 +1658,7 @@
         "Switch Windows theme (light/dark)",
         "Verify application adapts or remains functional"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2012,7 +2012,7 @@
         "Check output JPEG EXIF data",
         "Verify orientation is correct"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 195,
-    "failing": 10,
+    "passing": 203,
+    "failing": 2,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,

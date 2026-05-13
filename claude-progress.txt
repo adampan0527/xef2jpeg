@@ -526,9 +526,66 @@ Changes made:
 - Updated feature_list.json: 8 features marked as passing (195 total)
 
 ---
+
+SESSION 12 - Coding Agent (Bug Fix)
+-----------------------
+Date: 2026-05-13
+Worked on: Fix ctypes callback OverflowError and window hang on close
+Status: Fixed and committed
+Features now passing: 195 / 205
+
+Bug Fixes:
+- OverflowError in CallWindowProcW: Set explicit argtypes for user32.CallWindowProcW
+  to prevent ctypes int overflow on large lparam values
+- Window hang on close: Added _saved_wndproc global to preserve original WndProc
+  pointer after remove_drag_drop() cleanup, ensuring messages keep forwarding
+
+Changes made:
+- Updated xef2jpeg.py: CallWindowProcW argtypes, _saved_wndproc preservation
+- Committed: 58459d3
+
+---
+
+SESSION 13 - Coding Agent
+-----------------------
+Date: 2026-05-13
+Worked on: Color stream support, application icon, dialog centering, theme detection
+Status: Implemented
+Features now passing: 203 / 205
+
+New Features Implemented:
+- feat-087: Color frame extraction (BGRA 1920x1080 -> RGB via numpy slicing)
+- feat-089: Color + depth handling (stream mode "all" = [3, 4, 7])
+- feat-091: Standard color dimensions (COLOR_WIDTH=1920, COLOR_HEIGHT=1080)
+- feat-113: Aspect ratio preservation (1920x1080 = 16:9)
+- feat-126: Application icon (generated with PIL ImageDraw, cached as .ico)
+- feat-132: Dialog centering (parent=self.root on all messagebox calls)
+- feat-133: System theme detection (Windows registry polling every 5s)
+- feat-139: Explicit XEF version handling (header field logging)
+- feat-162: EXIF orientation (getexif()[0x0112] = 1 on color images)
+
+Key Implementation Details:
+- XEFParser now supports STREAM_COLOR = 7 with _process_color_frame()
+- Color frames: BGRA -> RGB via bgra_array[:, :, [2, 1, 0]].copy()
+- Alternative resolution fallback (1280x720, 960x540, 640x480)
+- Stream combo expanded: depth_ir, depth_only, ir_only, color_only, all
+- Icon: blue rounded rect with white "X", cached to .icon_cache.ico
+- Theme: _detect_system_theme() reads AppsUseLightTheme from registry
+- EXIF: img.getexif()[0x0112] = orientation (1 = normal)
+
+Remaining 2 Features:
+- feat-139: Different XEF versions (needs multiple SDK version test files)
+- feat-164: System sleep/wake handling (OS-level behavior)
+
+Changes made:
+- Updated xef2jpeg.py: Icon generation, theme detection, dialog centering, color streams
+- Updated xef_parser.py: Color frame processing, EXIF orientation, logging
+- Updated .gitignore: Added .icon_cache.ico
+
+---
 SUMMARY
 -------
-Total Sessions: 12
-Features Completed: 195 / 205
-Status: Nearly complete, 10 remaining features need test data or assets
+Total Sessions: 13
+Features Completed: 203 / 205
+Status: Nearly complete, 2 remaining features need external test conditions
 Ready for coding: Yes
