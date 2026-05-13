@@ -91,11 +91,12 @@ class XEFParser:
         self.max_frames = max_frames
         self.target_streams = target_streams if target_streams is not None else [self.STREAM_DEPTH, self.STREAM_IR]
 
-    def parse(self, use_tqdm=True):
+    def parse(self, use_tqdm=True, callback=None):
         """Parse XEF file and extract frames from target streams.
 
         Args:
             use_tqdm: Show tqdm progress bar in terminal (default True)
+            callback: Optional callback(progress, message) for GUI updates
         """
         with open(self.filepath, 'rb') as f:
             # 1. Read and validate file header
@@ -105,10 +106,13 @@ class XEFParser:
             self._read_stream_descriptors(f)
 
             # 3. Find start of event data
+            if callback:
+                callback(0.05, "Scanning for frame data...")
             event_start = self._find_event_data_start(f)
 
             # 4. Extract frames sequentially from event data
-            self._extract_frames_sequential(f, event_start, use_tqdm=use_tqdm)
+            self._extract_frames_sequential(f, event_start, use_tqdm=use_tqdm,
+                                            callback=callback)
 
         return self.frames
 
@@ -284,7 +288,7 @@ class XEFParser:
 
         return True
 
-    def _extract_frames_sequential(self, f, start_offset, use_tqdm=True):
+    def _extract_frames_sequential(self, f, start_offset, use_tqdm=True, callback=None):
         """
         Extract frames by sequentially reading segment descriptors and data.
 
@@ -295,6 +299,7 @@ class XEFParser:
             f: Open file object
             start_offset: Starting offset for event data
             use_tqdm: Show tqdm progress bar in terminal
+            callback: Optional callback(progress, message) for GUI updates
         """
         f.seek(0)
         file_size = f.seek(0, 2)
@@ -306,11 +311,12 @@ class XEFParser:
         offset = start_offset
 
         # Set up progress bar
+        file_stem = self.filepath.stem
         pbar = None
         if use_tqdm and tqdm is not None:
             try:
                 pbar = tqdm(
-                    desc=f"Extracting frames",
+                    desc=f"[{file_stem}] Extracting frames",
                     unit=" frames",
                     dynamic_ncols=True,
                     leave=False
@@ -356,6 +362,7 @@ class XEFParser:
                             if frame_info:
                                 self.frames.append(frame_info)
                                 frame_counts[stream_type] += 1
+                                total_extracted = sum(frame_counts.values())
 
                                 if pbar is not None:
                                     pbar.update(1)
@@ -364,6 +371,12 @@ class XEFParser:
                                         for st in self.target_streams
                                         if frame_counts[st] > 0
                                     })
+
+                                # Update GUI callback periodically
+                                if callback and total_extracted % 10 == 0:
+                                    parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
+                                             for st in self.target_streams if frame_counts[st] > 0]
+                                    callback(0.5, f"Extracting: {', '.join(parts)}...")
 
                 # Move to next segment
                 offset = data_start + frame_size
@@ -632,7 +645,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
         callback(0.0, "Validating XEF file...")
 
     parser = XEFParser(xef_path, max_frames=max_frames, target_streams=target_streams)
-    parser.parse(use_tqdm=use_tqdm)
+    parser.parse(use_tqdm=use_tqdm, callback=callback)
 
     if callback:
         stream_info = parser.get_stream_info()

@@ -638,7 +638,7 @@ class XEF2JPEGApp:
                     target_streams=target_streams,
                     callback=progress_callback,
                     quality=quality,
-                    use_tqdm=False
+                    use_tqdm=True
                 )
 
                 all_saved_files.extend(saved_files)
