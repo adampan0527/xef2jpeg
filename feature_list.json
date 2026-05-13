@@ -1584,7 +1584,7 @@
         "Verify both Browse buttons have same width",
         "Verify button text fits without truncation"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1596,7 +1596,7 @@
         "Verify entry fields and buttons are vertically aligned",
         "Verify visual alignment looks correct"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1621,7 +1621,7 @@
         "Check if entry fields have placeholder or default text",
         "Verify placeholder helps user understand what to enter"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -1842,7 +1842,7 @@
         "Check for log output or log file",
         "Verify key activities are logged (start, frames, completion)"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2049,7 +2049,7 @@
         "Run batch conversion",
         "Verify all files are converted"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2061,7 +2061,7 @@
         "Check for version display or about dialog",
         "Verify version information is accessible"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2172,7 +2172,7 @@
         "Press Ctrl+C",
         "Verify application exits cleanly"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2197,7 +2197,7 @@
         "Relaunch application",
         "Verify window appears at same position"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 187,
-    "failing": 18,
+    "passing": 195,
+    "failing": 10,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,

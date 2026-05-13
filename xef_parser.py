@@ -21,9 +21,12 @@ Stream Types:
 """
 
 import struct
+import logging
 import numpy as np
 from pathlib import Path
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 
 class XEFParser:
@@ -492,6 +495,9 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     session_folder = base_output / timestamp
     session_folder.mkdir(parents=True, exist_ok=True)
 
+    logger.info("Converting XEF file: %s", xef_path)
+    logger.info("Output folder: %s", session_folder)
+
     if callback:
         callback(0.0, "Validating XEF file...")
 
@@ -514,6 +520,8 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
 
         stream_info = parser.get_stream_info()
         available_names = [s['name'] for s in stream_info]
+        logger.warning("No frames extracted. Available streams: %s",
+                       ', '.join(available_names) if available_names else 'none')
         raise ValueError(
             f"No frames extracted from target streams. "
             f"Available streams: {', '.join(available_names) if available_names else 'none'}"
@@ -522,10 +530,13 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     if callback:
         callback(0.5, f"Found {len(frames)} frames, converting to JPEG...")
 
+    logger.info("Found %d frames, saving to JPEG (quality=%d)", len(frames), quality)
+
     saved_files = parser.save_frames_to_jpeg(session_folder, quality=quality)
 
     if callback:
         callback(1.0, "Conversion complete")
 
     frame_types = list(set(f['stream_name'] for f in frames))
+    logger.info("Conversion complete: %d files saved", len(saved_files))
     return frame_types, saved_files, str(session_folder)
