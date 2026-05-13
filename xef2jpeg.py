@@ -86,6 +86,10 @@ shell32.DragQueryFileW.argtypes = [ctypes.wintypes.HANDLE, ctypes.wintypes.UINT,
 shell32.DragQueryFileW.restype = ctypes.wintypes.UINT
 shell32.DragFinish.argtypes = [ctypes.wintypes.HANDLE]
 shell32.DragFinish.restype = None
+user32.CallWindowProcW.argtypes = [ctypes.c_void_p, ctypes.wintypes.HWND,
+                                    ctypes.wintypes.UINT, ctypes.wintypes.WPARAM,
+                                    ctypes.wintypes.LPARAM]
+user32.CallWindowProcW.restype = ctypes.wintypes.LPARAM
 
 # Window procedure type
 WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.wintypes.HWND,
@@ -94,6 +98,7 @@ WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.wintypes.HWND,
 
 # Store original window procedure and callback reference
 _original_wndproc = None
+_saved_wndproc = None  # Preserved during cleanup so messages keep forwarding
 _wndproc_ref = None
 _app_ref = None
 _dnd_enabled = False
@@ -117,11 +122,19 @@ def _new_wndproc(hwnd, msg, wparam, lparam):
     except Exception:
         pass
 
-    # For all messages (including WM_DROPFILES failures), call original proc
+    # For all messages, forward to original proc with explicit type casting
     try:
-        if _original_wndproc:
-            return user32.CallWindowProcW(_original_wndproc, hwnd, msg, wparam, lparam)
-    except (OSError, ValueError):
+        wndproc = _original_wndproc or _saved_wndproc
+        if wndproc:
+            result = user32.CallWindowProcW(
+                wndproc,
+                ctypes.wintypes.HWND(hwnd),
+                ctypes.wintypes.UINT(msg),
+                ctypes.wintypes.WPARAM(wparam),
+                ctypes.wintypes.LPARAM(lparam)
+            )
+            return result
+    except Exception:
         pass
     return 0
 
@@ -132,7 +145,7 @@ def remove_drag_drop(root):
     Must be called before tkinter destroys the window to avoid
     access violations from stale WndProc pointers.
     """
-    global _original_wndproc, _wndproc_ref, _app_ref, _dnd_enabled
+    global _original_wndproc, _saved_wndproc, _wndproc_ref, _app_ref, _dnd_enabled
 
     if not _dnd_enabled:
         return
@@ -147,6 +160,8 @@ def remove_drag_drop(root):
     except (OSError, ValueError):
         pass
 
+    # Preserve original WndProc so pending messages still get forwarded
+    _saved_wndproc = _original_wndproc
     _original_wndproc = None
     _wndproc_ref = None
     _app_ref = None
