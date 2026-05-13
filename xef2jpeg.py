@@ -234,6 +234,24 @@ def check_kinect_sdk():
     )
 
 
+def _detect_system_theme():
+    """Detect Windows system theme (light or dark).
+
+    Returns:
+        str: 'dark' or 'light'
+    """
+    if sys.platform == 'win32':
+        try:
+            import winreg
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+                return 'light' if value == 1 else 'dark'
+        except (OSError, ImportError):
+            pass
+    return 'light'
+
+
 class XEF2JPEGApp:
     """Main application class for XEF to JPEG conversion."""
 
@@ -252,6 +270,12 @@ class XEF2JPEGApp:
                 self.root.geometry(saved_geom)
             except tk.TclError:
                 pass
+
+        # Set application icon (feat-126)
+        self._set_app_icon()
+
+        # Detect system theme (feat-133)
+        self._current_theme = _detect_system_theme()
 
         # Application state
         self.input_file = tk.StringVar()
@@ -278,7 +302,39 @@ class XEF2JPEGApp:
         # Clean up drag-and-drop subclass before window closes
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
-        logger.info("XEF2JPEG v%s started on %s", __version__, sys.platform)
+        # Periodic theme change check (feat-133)
+        self.root.after(5000, self._check_theme_change)
+
+        logger.info("XEF2JPEG v%s started on %s (theme: %s)",
+                    __version__, sys.platform, self._current_theme)
+
+    def _set_app_icon(self):
+        """Generate and set the application icon programmatically (feat-126)."""
+        try:
+            from PIL import Image, ImageDraw
+
+            icon_cache = Path(__file__).parent / ".icon_cache.ico"
+
+            if not icon_cache.exists():
+                # Generate a simple icon: blue camera/XEF icon
+                size = 32
+                img = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+                draw = ImageDraw.Draw(img)
+
+                # Draw a rounded rectangle background (blue)
+                draw.rounded_rectangle([2, 2, size - 3, size - 3], radius=4,
+                                       fill=(37, 99, 235, 255))
+
+                # Draw "X" letter for XEF
+                draw.line([(8, 8), (24, 24)], fill=(255, 255, 255, 255), width=3)
+                draw.line([(24, 8), (8, 24)], fill=(255, 255, 255, 255), width=3)
+
+                img.save(str(icon_cache), format='ICO',
+                         sizes=[(16, 16), (32, 32)])
+
+            self.root.iconbitmap(str(icon_cache))
+        except Exception:
+            pass
 
     def setup_ui(self):
         """Setup the user interface."""
@@ -332,7 +388,8 @@ class XEF2JPEGApp:
         ttk.Label(main_frame, text="Stream Type:").grid(row=3, column=0,
                                                         sticky=tk.W, pady=5)
         stream_combo = ttk.Combobox(main_frame, textvariable=self.stream_mode,
-                                   values=["depth_ir", "depth_only", "ir_only"],
+                                   values=["depth_ir", "depth_only", "ir_only",
+                                           "color_only", "all"],
                                    state="readonly", width=20)
         stream_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
 
@@ -375,7 +432,7 @@ class XEF2JPEGApp:
 
     def _show_sdk_info(self):
         """Show Kinect SDK status information on startup."""
-        messagebox.showinfo("Kinect SDK Status", self.sdk_message)
+        messagebox.showinfo("Kinect SDK Status", self.sdk_message, parent=self.root)
 
     def _show_about(self):
         """Show about dialog with version information."""
@@ -385,7 +442,9 @@ class XEF2JPEGApp:
             f"Convert Kinect V2 XEF files to JPEG format.\n\n"
             f"Platform: {sys.platform}\n"
             f"Python: {sys.version.split()[0]}\n"
-            f"Log file: {LOG_FILE}"
+            f"Theme: {self._current_theme}\n"
+            f"Log file: {LOG_FILE}",
+            parent=self.root
         )
 
     def _on_close(self):
@@ -398,6 +457,19 @@ class XEF2JPEGApp:
             pass
         remove_drag_drop(self.root)
         self.root.destroy()
+
+    def _check_theme_change(self):
+        """Periodically check for Windows theme changes (feat-133)."""
+        try:
+            new_theme = _detect_system_theme()
+            if new_theme != self._current_theme:
+                self._current_theme = new_theme
+                logger.info("System theme changed to: %s", new_theme)
+                # Theme change doesn't require UI rebuild - ttk adapts automatically
+        except Exception:
+            pass
+        # Schedule next check
+        self.root.after(5000, self._check_theme_change)
 
     def _setup_placeholder(self, entry, placeholder):
         """Set up placeholder text for a ttk.Entry widget."""
@@ -478,18 +550,21 @@ class XEF2JPEGApp:
         # Validate inputs
         if not self._file_queue:
             messagebox.showerror("Error",
-                                "Please add at least one XEF file to the queue.")
+                                "Please add at least one XEF file to the queue.",
+                                parent=self.root)
             return
 
         if not self.output_directory.get():
-            messagebox.showerror("Error", "Please select an output directory.")
+            messagebox.showerror("Error", "Please select an output directory.",
+                                parent=self.root)
             return
 
         # Check all input files exist
         for filepath in self._file_queue:
             if not os.path.exists(filepath):
                 messagebox.showerror("Error",
-                                    f"Input file does not exist:\n{filepath}")
+                                    f"Input file does not exist:\n{filepath}",
+                                    parent=self.root)
                 return
 
         # Disable UI during conversion
@@ -531,6 +606,10 @@ class XEF2JPEGApp:
                 target_streams = [3]  # Depth only
             elif mode == "ir_only":
                 target_streams = [4]  # IR only
+            elif mode == "color_only":
+                target_streams = [7]  # Color only
+            elif mode == "all":
+                target_streams = [3, 4, 7]  # Depth + IR + Color
             else:
                 target_streams = [3, 4]  # Both depth and IR
 
@@ -607,13 +686,15 @@ class XEF2JPEGApp:
 
         if cancelled:
             self.status_var.set("Cancelled")
-            messagebox.showinfo("Cancelled", "Conversion was cancelled.")
+            messagebox.showinfo("Cancelled", "Conversion was cancelled.",
+                               parent=self.root)
         elif success:
             self.status_var.set("Ready")
-            messagebox.showinfo("Success", message)
+            messagebox.showinfo("Success", message, parent=self.root)
         elif error:
             self.status_var.set("Ready")
-            messagebox.showerror("Error", f"Conversion failed: {error}")
+            messagebox.showerror("Error", f"Conversion failed: {error}",
+                                parent=self.root)
         else:
             self.status_var.set("Ready")
 

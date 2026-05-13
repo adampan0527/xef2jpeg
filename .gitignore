@@ -40,3 +40,6 @@ XEF2JPEG_Output/*
 
 # Application settings (user-specific)
 xef2jpeg_settings.json
+
+# Generated icon cache
+.icon_cache.ico

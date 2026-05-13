@@ -18,13 +18,14 @@ Stream Types:
   4 = IR                  - 512x424 uint16 (434,176 bytes)
   5 = Opaque              - 640 bytes metadata
   6 = Telemetry           - 20 bytes sensor data
+  7 = Color               - 1920x1080 BGRA (8,294,400 bytes)
 """
 
 import struct
 import logging
 import numpy as np
 from pathlib import Path
-from PIL import Image
+from PIL import Image, JpegImagePlugin
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class XEFParser:
     STREAM_IR = 4
     STREAM_OPAQUE = 5
     STREAM_TELEMETRY = 6
+    STREAM_COLOR = 7
 
     STREAM_NAMES = {
         1: 'body',
@@ -47,12 +49,18 @@ class XEFParser:
         4: 'ir',
         5: 'opaque',
         6: 'telemetry',
+        7: 'color',
     }
 
     # Kinect V2 depth/IR dimensions
     DEPTH_WIDTH = 512
     DEPTH_HEIGHT = 424
     DEPTH_FRAME_SIZE = DEPTH_WIDTH * DEPTH_HEIGHT * 2  # 434,176 bytes
+
+    # Kinect V2 color dimensions
+    COLOR_WIDTH = 1920
+    COLOR_HEIGHT = 1080
+    COLOR_FRAME_SIZE = COLOR_WIDTH * COLOR_HEIGHT * 4  # 8,294,400 bytes (BGRA)
 
     # Segment descriptor size
     SEGMENT_DESC_SIZE = 32
@@ -125,6 +133,8 @@ class XEFParser:
         }
         self.stream_count = stream_count
 
+        logger.info("XEF header: streams=%d, unknown1=%d", stream_count, unknown1)
+
     def _read_stream_descriptors(self, f):
         """Read stream descriptors from the area after the file header."""
         # Stream descriptors are between 0x2C and the start of event data.
@@ -184,6 +194,9 @@ class XEFParser:
                 {'type': 5, 'name': 'opaque', 'offset': 0},
                 {'type': 6, 'name': 'telemetry', 'offset': 0},
             ]
+
+        stream_names = [s['name'] for s in self.streams]
+        logger.info("Streams found: %s", ', '.join(stream_names))
 
     def _find_event_data_start(self, f):
         """
@@ -257,11 +270,8 @@ class XEFParser:
             return False
 
         # Frame size must be reasonable
-        if frame_size > 10_000_000:  # 10 MB max
+        if frame_size > 20_000_000:  # 20 MB max (color frames are ~8.3MB)
             return False
-
-        # Session ID should be reasonable (not all zeros for a valid recording)
-        # (Relaxed: allow zeros for initial segments)
 
         return True
 
@@ -328,6 +338,8 @@ class XEFParser:
             return self._process_depth_frame(raw_data, frame_index, seg_counter, event_index)
         elif stream_type == self.STREAM_IR:
             return self._process_ir_frame(raw_data, frame_index, seg_counter, event_index)
+        elif stream_type == self.STREAM_COLOR:
+            return self._process_color_frame(raw_data, frame_index, seg_counter, event_index)
         return None
 
     def _process_depth_frame(self, raw_data, frame_index, seg_counter, event_index):
@@ -402,12 +414,66 @@ class XEFParser:
             'event_index': event_index,
         }
 
+    def _process_color_frame(self, raw_data, frame_index, seg_counter, event_index):
+        """Process a color frame (1920x1080 BGRA) into an RGB image array."""
+        expected_size = self.COLOR_WIDTH * self.COLOR_HEIGHT * 4
+        if len(raw_data) != expected_size:
+            # Try alternative color resolutions
+            # Some XEF files may use different resolutions
+            total_pixels = len(raw_data) // 4
+            if total_pixels <= 0:
+                return None
+            # Try common Kinect V2 color resolutions
+            for w, h in [(1920, 1080), (1280, 720), (960, 540), (640, 480)]:
+                if total_pixels == w * h:
+                    try:
+                        bgra_array = np.frombuffer(raw_data[:w * h * 4], dtype=np.uint8).reshape(
+                            (h, w, 4)
+                        )
+                        # Convert BGRA to RGB
+                        rgb_array = bgra_array[:, :, [2, 1, 0]].copy()
+                        return {
+                            'type': 'color',
+                            'stream_type': self.STREAM_COLOR,
+                            'stream_name': 'color',
+                            'data': rgb_array,
+                            'raw_data': bgra_array,
+                            'index': frame_index,
+                            'seg_counter': seg_counter,
+                            'event_index': event_index,
+                        }
+                    except (ValueError, IndexError):
+                        continue
+            return None
+
+        try:
+            bgra_array = np.frombuffer(raw_data, dtype=np.uint8).reshape(
+                (self.COLOR_HEIGHT, self.COLOR_WIDTH, 4)
+            )
+        except ValueError:
+            return None
+
+        # Convert BGRA to RGB
+        rgb_array = bgra_array[:, :, [2, 1, 0]].copy()
+
+        return {
+            'type': 'color',
+            'stream_type': self.STREAM_COLOR,
+            'stream_name': 'color',
+            'data': rgb_array,
+            'raw_data': bgra_array,
+            'index': frame_index,
+            'seg_counter': seg_counter,
+            'event_index': event_index,
+        }
+
     def save_frames_to_jpeg(self, output_dir, base_name=None, quality=95):
         """
         Save extracted frames as JPEG files.
 
         Depth frames are saved to output_dir/Depth/
         IR frames are saved to output_dir/IR/
+        Color frames are saved to output_dir/Color/
 
         Naming format: {basename}_{stream_name}_{index:04d}.jpg
 
@@ -424,6 +490,7 @@ class XEFParser:
         STREAM_FOLDER_NAMES = {
             'depth': 'Depth',
             'ir': 'IR',
+            'color': 'Color',
             'body': 'Body',
             'calibration': 'Calibration',
             'opaque': 'Opaque',
@@ -447,13 +514,35 @@ class XEFParser:
             filename = f"{base_name}_{stream_name}_{frame['index']:04d}.jpg"
             filepath = subdirs[stream_name] / filename
 
-            # Save as grayscale
-            img = Image.fromarray(frame['data'], 'L')
-            img.save(str(filepath), 'JPEG', quality=quality)
+            if stream_name == 'color':
+                # Save color frames as RGB JPEG with EXIF orientation
+                img = Image.fromarray(frame['data'], 'RGB')
+                img = self._add_exif_orientation(img)
+                img.save(str(filepath), 'JPEG', quality=quality)
+            else:
+                # Save depth/IR frames as grayscale
+                img = Image.fromarray(frame['data'], 'L')
+                img.save(str(filepath), 'JPEG', quality=quality)
 
             saved_files.append(str(filepath))
 
         return saved_files
+
+    def _add_exif_orientation(self, img, orientation=1):
+        """Add EXIF orientation tag to a PIL Image.
+
+        Args:
+            img: PIL Image object
+            orientation: EXIF orientation value (1=normal, 3=180deg, etc.)
+
+        Returns:
+            PIL Image with EXIF data set.
+        """
+        try:
+            img.getexif()[0x0112] = orientation
+        except (AttributeError, Exception):
+            pass
+        return img
 
     def get_stream_info(self):
         """Return information about streams found in the file."""
@@ -475,6 +564,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
         {output_dir}/{YYYY_MM_DD_HH_MM_SS}/
             Depth/   (if depth frames)
             IR/      (if IR frames)
+            Color/   (if color frames)
 
     Args:
         xef_path: Path to input .xef file
