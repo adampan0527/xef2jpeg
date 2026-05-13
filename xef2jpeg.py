@@ -154,7 +154,7 @@ class XEF2JPEGApp:
                 target_streams = [3, 4]  # Both depth and IR
 
             # Perform conversion
-            frame_types, saved_files = convert_xef_to_jpeg(
+            frame_types, saved_files, output_folder = convert_xef_to_jpeg(
                 self.input_file.get(),
                 self.output_directory.get(),
                 max_frames=100,  # Limit for performance
@@ -169,7 +169,7 @@ class XEF2JPEGApp:
                               f"Conversion completed successfully!\n\n"
                               f"Stream types: {stream_names}\n"
                               f"Frames converted: {file_count}\n"
-                              f"Output saved to: {self.output_directory.get()}")
+                              f"Output saved to:\n{output_folder}")
 
         except Exception as e:
             messagebox.showerror("Error", f"Conversion failed: {str(e)}")

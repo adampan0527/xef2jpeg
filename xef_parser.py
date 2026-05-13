@@ -403,6 +403,9 @@ class XEFParser:
         """
         Save extracted frames as JPEG files.
 
+        Depth frames are saved to output_dir/Depth/
+        IR frames are saved to output_dir/IR/
+
         Naming format: {basename}_{stream_name}_{index:04d}.jpg
 
         Returns:
@@ -414,25 +417,36 @@ class XEFParser:
         if base_name is None:
             base_name = self.filepath.stem
 
+        # Stream type to folder name mapping
+        STREAM_FOLDER_NAMES = {
+            'depth': 'Depth',
+            'ir': 'IR',
+            'body': 'Body',
+            'calibration': 'Calibration',
+            'opaque': 'Opaque',
+            'telemetry': 'Telemetry',
+        }
+
+        # Create stream-specific subdirectories
+        subdirs = {}
         saved_files = []
 
-        for i, frame in enumerate(self.frames):
+        for frame in self.frames:
             stream_name = frame.get('stream_name', frame['type'])
-            filename = f"{base_name}_{stream_name}_{frame['index']:04d}.jpg"
-            filepath = output_path / filename
 
-            if stream_name == 'depth':
-                # Depth: save as grayscale
-                img = Image.fromarray(frame['data'], 'L')
-                img.save(str(filepath), 'JPEG', quality=95)
-            elif stream_name == 'ir':
-                # IR: save as grayscale
-                img = Image.fromarray(frame['data'], 'L')
-                img.save(str(filepath), 'JPEG', quality=95)
-            else:
-                # Default: try grayscale
-                img = Image.fromarray(frame['data'], 'L')
-                img.save(str(filepath), 'JPEG', quality=95)
+            # Ensure subdirectory exists for this stream type
+            if stream_name not in subdirs:
+                folder_name = STREAM_FOLDER_NAMES.get(stream_name, stream_name.capitalize())
+                subdir_path = output_path / folder_name
+                subdir_path.mkdir(parents=True, exist_ok=True)
+                subdirs[stream_name] = subdir_path
+
+            filename = f"{base_name}_{stream_name}_{frame['index']:04d}.jpg"
+            filepath = subdirs[stream_name] / filename
+
+            # Save as grayscale
+            img = Image.fromarray(frame['data'], 'L')
+            img.save(str(filepath), 'JPEG', quality=95)
 
             saved_files.append(str(filepath))
 
@@ -454,21 +468,33 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     """
     Convert XEF file to JPEG images.
 
+    Creates a timestamped folder inside output_dir:
+        {output_dir}/{YYYY_MM_DD_HH_MM_SS}/
+            Depth/   (if depth frames)
+            IR/      (if IR frames)
+
     Args:
         xef_path: Path to input .xef file
-        output_dir: Path to output directory
+        output_dir: Path to output directory (created if not exists)
         max_frames: Maximum number of frames per stream type (None = unlimited)
         target_streams: List of stream types to extract (default: [3, 4] = depth, ir)
         callback: Optional callback function(progress, message)
 
     Returns:
-        Tuple of (stream_types_found, saved_file_paths)
+        Tuple of (stream_types_found, saved_file_paths, output_folder_path)
     """
-    parser = XEFParser(xef_path, max_frames=max_frames, target_streams=target_streams)
+    from datetime import datetime
+
+    # Create timestamped output folder
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    base_output = Path(output_dir)
+    session_folder = base_output / timestamp
+    session_folder.mkdir(parents=True, exist_ok=True)
 
     if callback:
         callback(0.0, "Validating XEF file...")
 
+    parser = XEFParser(xef_path, max_frames=max_frames, target_streams=target_streams)
     parser.parse()
 
     if callback:
@@ -479,7 +505,12 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     frames = parser.frames
 
     if not frames:
-        # Check what streams ARE available
+        # Clean up empty timestamp folder
+        try:
+            session_folder.rmdir()
+        except OSError:
+            pass
+
         stream_info = parser.get_stream_info()
         available_names = [s['name'] for s in stream_info]
         raise ValueError(
@@ -490,11 +521,10 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     if callback:
         callback(0.5, f"Found {len(frames)} frames, converting to JPEG...")
 
-    saved_files = parser.save_frames_to_jpeg(output_dir)
+    saved_files = parser.save_frames_to_jpeg(session_folder)
 
     if callback:
         callback(1.0, "Conversion complete")
 
-    # Return stream types found plus saved files
     frame_types = list(set(f['stream_name'] for f in frames))
-    return frame_types, saved_files
+    return frame_types, saved_files, str(session_folder)
