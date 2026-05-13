@@ -1793,7 +1793,7 @@
         "Verify quality can be adjusted (or is set to reasonable default)",
         "Convert and verify file size reflects quality setting"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "low"
     },
     {
@@ -2544,8 +2544,8 @@
   ],
   "metadata": {
     "total_features": 205,
-    "passing": 186,
-    "failing": 19,
+    "passing": 187,
+    "failing": 18,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,

@@ -206,8 +206,8 @@ class XEF2JPEGApp:
         """Initialize the application."""
         self.root = root
         self.root.title("XEF2JPEG - Kinect V2 to JPEG Converter")
-        self.root.geometry("600x450")
-        self.root.minsize(500, 350)
+        self.root.geometry("600x480")
+        self.root.minsize(500, 380)
 
         # Load saved settings
         self.settings = load_settings()
@@ -217,6 +217,7 @@ class XEF2JPEGApp:
         default_output = self.settings.get('last_output_dir', str(Path.cwd() / "XEF2JPEG_Output"))
         self.output_directory = tk.StringVar(value=default_output)
         self.stream_mode = tk.StringVar(value="depth_ir")
+        self.jpeg_quality = tk.IntVar(value=95)
         self.is_converting = False
         self.cancel_event = threading.Event()
         self._conversion_thread = None
@@ -275,19 +276,27 @@ class XEF2JPEGApp:
                                    state="readonly", width=20)
         stream_combo.grid(row=3, column=1, sticky=tk.W, padx=5, pady=5)
 
+        # JPEG quality selection
+        ttk.Label(main_frame, text="JPEG Quality:").grid(row=4, column=0,
+                                                         sticky=tk.W, pady=5)
+        quality_combo = ttk.Combobox(main_frame, textvariable=self.jpeg_quality,
+                                    values=[60, 70, 80, 85, 90, 95, 100],
+                                    state="readonly", width=10)
+        quality_combo.grid(row=4, column=1, sticky=tk.W, padx=5, pady=5)
+
         # Progress bar
         self.progress = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E),
+        self.progress.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E),
                           pady=20)
 
         # Status label
         self.status_var = tk.StringVar(value="Ready")
         status_label = ttk.Label(main_frame, textvariable=self.status_var)
-        status_label.grid(row=5, column=0, columnspan=3, pady=5)
+        status_label.grid(row=6, column=0, columnspan=3, pady=5)
 
         # Button frame (holds Convert and Cancel buttons side by side)
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=6, column=0, columnspan=3, pady=10)
+        button_frame.grid(row=7, column=0, columnspan=3, pady=10)
 
         self.convert_button = ttk.Button(button_frame, text="Start Conversion",
                                         command=self.start_conversion)
@@ -395,7 +404,8 @@ class XEF2JPEGApp:
                 self.output_directory.get(),
                 max_frames=100,  # Limit for performance
                 target_streams=target_streams,
-                callback=progress_callback
+                callback=progress_callback,
+                quality=self.jpeg_quality.get()
             )
 
             # Check if cancelled before showing success

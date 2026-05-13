@@ -399,7 +399,7 @@ class XEFParser:
             'event_index': event_index,
         }
 
-    def save_frames_to_jpeg(self, output_dir, base_name=None):
+    def save_frames_to_jpeg(self, output_dir, base_name=None, quality=95):
         """
         Save extracted frames as JPEG files.
 
@@ -446,7 +446,7 @@ class XEFParser:
 
             # Save as grayscale
             img = Image.fromarray(frame['data'], 'L')
-            img.save(str(filepath), 'JPEG', quality=95)
+            img.save(str(filepath), 'JPEG', quality=quality)
 
             saved_files.append(str(filepath))
 
@@ -464,7 +464,7 @@ class XEFParser:
         return any(s['type'] == stream_type for s in self.streams)
 
 
-def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=None, callback=None):
+def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=None, callback=None, quality=95):
     """
     Convert XEF file to JPEG images.
 
@@ -479,6 +479,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
         max_frames: Maximum number of frames per stream type (None = unlimited)
         target_streams: List of stream types to extract (default: [3, 4] = depth, ir)
         callback: Optional callback function(progress, message)
+        quality: JPEG quality (1-100, default 95)
 
     Returns:
         Tuple of (stream_types_found, saved_file_paths, output_folder_path)
@@ -521,7 +522,7 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
     if callback:
         callback(0.5, f"Found {len(frames)} frames, converting to JPEG...")
 
-    saved_files = parser.save_frames_to_jpeg(session_folder)
+    saved_files = parser.save_frames_to_jpeg(session_folder, quality=quality)
 
     if callback:
         callback(1.0, "Conversion complete")
