@@ -2551,7 +2551,7 @@
         "Verify progress bar updates as frames are converted",
         "Verify progress bar shows frame count and percentage"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     },
     {
@@ -2564,21 +2564,22 @@
         "Verify README_CN.md covers installation, usage, and features",
         "Verify README_CN.md references the same project structure as README.md"
       ],
-      "passes": false,
+      "passes": true,
       "priority": "medium"
     }
   ],
   "metadata": {
     "total_features": 207,
-    "passing": 203,
-    "failing": 4,
+    "passing": 205,
+    "failing": 2,
     "last_updated": "2026-05-13",
     "categories": {
       "functional": 150,
       "ui": 30,
       "error-handling": 17,
       "accessibility": 10,
-      "performance": 8
+      "performance": 9,
+      "documentation": 1
     }
   }
 }
