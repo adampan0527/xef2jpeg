@@ -34,6 +34,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Log file path (shared with xef2jpeg.py)
+LOG_FILE = Path(__file__).parent / "xef2jpeg.log"
+
 
 class XEFParser:
     """Parser for Kinect V2 XEF event stream files."""
@@ -310,6 +313,12 @@ class XEFParser:
 
         offset = start_offset
 
+        # Diagnostic counters
+        segments_found = 0
+        segments_rejected = 0
+        reject_reasons = {}  # reason -> count
+        target_mismatch_count = 0
+
         # Set up progress bar
         file_stem = self.filepath.stem
         pbar = None
@@ -338,15 +347,30 @@ class XEFParser:
 
                 if not self._is_valid_segment(desc, file_size):
                     # Invalid segment - try next byte alignment
+                    segments_rejected += 1
+                    # Log first few rejections for diagnosis
+                    if segments_rejected <= 5:
+                        try:
+                            st, fs = struct.unpack_from('<II', desc, 0)
+                            reject_key = f"type={st},size={fs}"
+                            reject_reasons[reject_key] = reject_reasons.get(reject_key, 0) + 1
+                            logger.debug("Rejected segment at 0x%X: type=%d, size=%d",
+                                        offset, st, fs)
+                        except Exception:
+                            pass
                     offset += 4
                     continue
 
+                segments_found += 1
                 stream_type, frame_size, session_id, seg_counter, frame_size2, event_index, padding = \
                     struct.unpack_from('<IIQIIII', desc)
 
                 # Validate that frame data fits within file
                 data_start = offset + self.SEGMENT_DESC_SIZE
                 if data_start + frame_size > file_size:
+                    logger.warning("Segment at 0x%X: frame data exceeds file (need %d, "
+                                   "have %d bytes remaining)", offset, frame_size,
+                                   file_size - data_start)
                     break
 
                 # Extract frame if it's a target stream type
@@ -377,12 +401,28 @@ class XEFParser:
                                     parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
                                              for st in self.target_streams if frame_counts[st] > 0]
                                     callback(0.5, f"Extracting: {', '.join(parts)}...")
+                else:
+                    target_mismatch_count += 1
 
                 # Move to next segment
                 offset = data_start + frame_size
+
         finally:
             if pbar is not None:
                 pbar.close()
+
+        # Log diagnostic summary
+        total_extracted = sum(frame_counts.values())
+        logger.info("Extraction summary: %d segments found, %d rejected, "
+                    "%d target mismatches, %d frames extracted",
+                    segments_found, segments_rejected, target_mismatch_count,
+                    total_extracted)
+        if segments_rejected > 0 and reject_reasons:
+            logger.warning("First rejected segment samples: %s", reject_reasons)
+        if segments_found == 0 and segments_rejected > 0:
+            logger.error("All %d candidate segments were rejected. "
+                         "Possible format mismatch for this XEF file variant.",
+                         segments_rejected)
 
     def _process_frame(self, stream_type, raw_data, frame_index, seg_counter, event_index):
         """Process raw frame data into a normalized image array."""
@@ -663,11 +703,14 @@ def convert_xef_to_jpeg(xef_path, output_dir, max_frames=None, target_streams=No
 
         stream_info = parser.get_stream_info()
         available_names = [s['name'] for s in stream_info]
+        target_names = [parser.STREAM_NAMES.get(s, f'unknown_{s}') for s in (target_streams or [])]
         logger.warning("No frames extracted. Available streams: %s",
                        ', '.join(available_names) if available_names else 'none')
         raise ValueError(
-            f"No frames extracted from target streams. "
-            f"Available streams: {', '.join(available_names) if available_names else 'none'}"
+            f"No frames extracted from target streams.\n\n"
+            f"Requested: {', '.join(target_names)}\n"
+            f"Available: {', '.join(available_names) if available_names else 'none'}\n\n"
+            f"Check the log file for diagnostic details:\n{LOG_FILE}"
         )
 
     if callback:
