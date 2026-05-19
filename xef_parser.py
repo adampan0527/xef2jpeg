@@ -70,8 +70,9 @@ class XEFParser:
     COLOR_HEIGHT = 1080
     COLOR_FRAME_SIZE = COLOR_WIDTH * COLOR_HEIGHT * 4  # 8,294,400 bytes (BGRA)
 
-    # Segment descriptor size
-    SEGMENT_DESC_SIZE = 32
+    # Segment descriptor size (28 bytes: stream_type(4) + frame_size(4) +
+    # session_id(8) + hash(4) + frame_size2(4) + event_index(4))
+    SEGMENT_DESC_SIZE = 28
 
     # File header magic
     HEADER_MAGIC = b'EVENTS1\x00'
@@ -218,37 +219,18 @@ class XEFParser:
         """
         Find the start of event (segment) data.
 
-        The event data begins after the stream descriptors area.
-        We scan from the header end to find the first valid segment descriptor.
+        The event data begins after stream descriptors and calibration metadata.
+        XEF files have a large metadata/calibration section before the actual
+        interleaved event frames (depth, IR, body, etc.).  We skip calibration
+        (type 2) descriptors because they use a different format.
         """
-        # Start scanning from after the stream descriptor area
-        # Stream descriptors go from 0x2C to roughly 0x1000-0x2000
-        f.seek(0x2C)
-
-        # Read a chunk and find the last stream descriptor 0x3333 marker
-        chunk = f.read(0x2000)
-        marker_bytes = struct.pack('<H', self.STREAM_DESC_MARKER)
-        last_marker_pos = 0
-        pos = 0
-
-        while pos < len(chunk) - 2:
-            pos = chunk.find(marker_bytes, pos)
-            if pos < 0:
-                break
-            last_marker_pos = 0x2C + pos
-            pos += 2
-
-        # Event data starts after the last stream descriptor
-        # Each stream descriptor is roughly 200 bytes
-        scan_start = max(0x1000, last_marker_pos + 200)
-
-        # Now scan for the first valid segment descriptor
         f.seek(0)
         file_size = f.seek(0, 2)
-        f.seek(scan_start)
 
-        # Read chunks to find first valid segment descriptor
-        search_limit = min(scan_start + 5 * 1024 * 1024, file_size)  # Search up to 5MB
+        # Stream descriptors and calibration metadata can extend well past 5 MB,
+        # so search up to 200 MB for the first non-calibration event segment.
+        scan_start = 0x1000
+        search_limit = min(scan_start + 200 * 1024 * 1024, file_size)
         f.seek(scan_start)
 
         while f.tell() < search_limit - self.SEGMENT_DESC_SIZE:
@@ -257,23 +239,33 @@ class XEFParser:
             if len(desc) < self.SEGMENT_DESC_SIZE:
                 break
 
-            stream_type, frame_size = struct.unpack_from('<II', desc, 0)
-
-            # Validate segment descriptor
             if self._is_valid_segment(desc, file_size):
-                # Found first segment
-                return offset
+                stream_type = struct.unpack_from('<I', desc, 0)[0]
+                # Skip calibration descriptors (type 2) — they use a larger
+                # header format and are part of the metadata section.
+                if stream_type != self.STREAM_CALIBRATION:
+                    return offset
 
-            # Step forward one byte to find alignment
             f.seek(offset + 1)
 
         raise ValueError("Could not find event data in XEF file")
 
     def _is_valid_segment(self, desc, file_size):
-        """Check if a 32-byte block looks like a valid segment descriptor."""
+        """Check if a 28-byte block looks like a valid segment descriptor.
+
+        XEF segment descriptor layout (28 bytes):
+          bytes  0-3:  stream_type (uint32)
+          bytes  4-7:  frame_size (uint32)
+          bytes  8-15: session_id (uint64)
+          bytes 16-19: hash/unknown (uint32) — skipped
+          bytes 20-23: frame_size2 (uint32) — must equal frame_size
+          bytes 24-27: event_index (uint32)
+        """
+        if len(desc) < self.SEGMENT_DESC_SIZE:
+            return False
         try:
-            stream_type, frame_size, session_id, seg_counter, frame_size2, event_index, padding = \
-                struct.unpack_from('<IIQIIII', desc)
+            stream_type, frame_size = struct.unpack_from('<II', desc, 0)
+            frame_size2 = struct.unpack_from('<I', desc, 20)[0]
         except struct.error:
             return False
 
@@ -295,8 +287,12 @@ class XEFParser:
         """
         Extract frames by sequentially reading segment descriptors and data.
 
-        Starting from start_offset, read 32-byte descriptors, validate them,
+        Starting from start_offset, read 28-byte descriptors, validate them,
         and for target stream types, read and store the frame data.
+
+        Each segment occupies: descriptor(28) + frame_data(frame_size) + trailer(0-8).
+        We search a small window after each frame to locate the next descriptor
+        reliably, since the trailer size varies slightly between segment types.
 
         Args:
             f: Open file object
@@ -312,6 +308,7 @@ class XEFParser:
         max_per_stream = self.max_frames
 
         offset = start_offset
+        desc_size = self.SEGMENT_DESC_SIZE  # 28
 
         # Diagnostic counters
         segments_found = 0
@@ -334,21 +331,20 @@ class XEFParser:
                 pbar = None
 
         try:
-            while offset < file_size - self.SEGMENT_DESC_SIZE:
+            while offset < file_size - desc_size:
                 # Check if we have enough frames
                 if max_per_stream is not None:
                     if all(frame_counts[st] >= max_per_stream for st in self.target_streams):
                         break
 
                 f.seek(offset)
-                desc = f.read(self.SEGMENT_DESC_SIZE)
-                if len(desc) < self.SEGMENT_DESC_SIZE:
+                desc = f.read(desc_size)
+                if len(desc) < desc_size:
                     break
 
                 if not self._is_valid_segment(desc, file_size):
                     # Invalid segment - try next byte alignment
                     segments_rejected += 1
-                    # Log first few rejections for diagnosis
                     if segments_rejected <= 5:
                         try:
                             st, fs = struct.unpack_from('<II', desc, 0)
@@ -362,11 +358,12 @@ class XEFParser:
                     continue
 
                 segments_found += 1
-                stream_type, frame_size, session_id, seg_counter, frame_size2, event_index, padding = \
-                    struct.unpack_from('<IIQIIII', desc)
+                stream_type, frame_size = struct.unpack_from('<II', desc, 0)
+                event_index = struct.unpack_from('<I', desc, 24)[0]
+                seg_counter = struct.unpack_from('<I', desc, 20)[0]
 
-                # Validate that frame data fits within file
-                data_start = offset + self.SEGMENT_DESC_SIZE
+                # Frame data starts right after the 28-byte descriptor
+                data_start = offset + desc_size
                 if data_start + frame_size > file_size:
                     logger.warning("Segment at 0x%X: frame data exceeds file (need %d, "
                                    "have %d bytes remaining)", offset, frame_size,
@@ -381,7 +378,8 @@ class XEFParser:
 
                         if len(frame_data) == frame_size:
                             frame_info = self._process_frame(
-                                stream_type, frame_data, frame_counts[stream_type], seg_counter, event_index
+                                stream_type, frame_data, frame_counts[stream_type],
+                                seg_counter, event_index
                             )
                             if frame_info:
                                 self.frames.append(frame_info)
@@ -391,7 +389,7 @@ class XEFParser:
                                 if pbar is not None:
                                     pbar.update(1)
                                     pbar.set_postfix({
-                                        st: frame_counts[st]
+                                        self.STREAM_NAMES.get(st, str(st)): frame_counts[st]
                                         for st in self.target_streams
                                         if frame_counts[st] > 0
                                     })
@@ -404,8 +402,30 @@ class XEFParser:
                 else:
                     target_mismatch_count += 1
 
-                # Move to next segment
-                offset = data_start + frame_size
+                # Find the next segment descriptor.
+                # Each segment is desc(28) + frame_data + trailer(0-8 bytes).
+                # Search a small window around the expected position.
+                expected = offset + desc_size + frame_size
+                next_offset = None
+                for delta in range(-8, 12, 4):
+                    candidate = expected + delta
+                    if candidate <= offset or candidate + desc_size > file_size:
+                        continue
+                    f.seek(candidate)
+                    ndesc = f.read(desc_size)
+                    if len(ndesc) < desc_size:
+                        continue
+                    if self._is_valid_segment(ndesc, file_size):
+                        next_offset = candidate
+                        break
+
+                if next_offset is None:
+                    # Lost sync — no valid descriptor found near expected position
+                    logger.info("Lost segment sync at 0x%X after %d segments",
+                                offset, segments_found)
+                    break
+
+                offset = next_offset
 
         finally:
             if pbar is not None:
