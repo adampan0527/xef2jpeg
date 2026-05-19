@@ -112,11 +112,22 @@ class XEFParser:
             # 3. Find start of event data
             if callback:
                 callback(0.05, "Scanning for frame data...")
-            event_start = self._find_event_data_start(f)
+            try:
+                event_start = self._find_event_data_start(f)
+            except ValueError:
+                event_start = None
 
             # 4. Extract frames sequentially from event data
-            self._extract_frames_sequential(f, event_start, use_tqdm=use_tqdm,
-                                            callback=callback)
+            if event_start is not None:
+                self._extract_frames_sequential(f, event_start, use_tqdm=use_tqdm,
+                                                callback=callback)
+
+            # 5. If descriptor-based extraction found nothing, try raw scanning
+            if not self.frames:
+                logger.info("No frames from descriptors, trying raw frame scanning")
+                if callback:
+                    callback(0.1, "Scanning for raw frame data...")
+                self._extract_frames_raw(f, use_tqdm=use_tqdm, callback=callback)
 
         return self.frames
 
@@ -443,6 +454,180 @@ class XEFParser:
             logger.error("All %d candidate segments were rejected. "
                          "Possible format mismatch for this XEF file variant.",
                          segments_rejected)
+
+    def _extract_frames_raw(self, f, use_tqdm=True, callback=None):
+        """
+        Fallback frame extraction for XEF files without segment descriptors.
+
+        Some newer XEF files (stream_count >= 12) store raw frames without
+        the standard 28-byte segment descriptors. This method scans the file
+        at frame-aligned offsets looking for depth and IR data patterns.
+
+        Args:
+            f: Open file object
+            use_tqdm: Show tqdm progress bar in terminal
+            callback: Optional callback(progress, message) for GUI updates
+        """
+        f.seek(0)
+        file_size = f.seek(0, 2)
+        frame_size = self.DEPTH_FRAME_SIZE  # 434,176 bytes (same for depth & IR)
+
+        # Determine which streams to look for
+        want_depth = self.STREAM_DEPTH in self.target_streams
+        want_ir = self.STREAM_IR in self.target_streams
+
+        if not want_depth and not want_ir:
+            return
+
+        # Phase 1: Sample the file to find data regions.
+        # Scan at frame-aligned intervals (every 16 frames ≈ 7 MB).
+        sample_step = frame_size * 16
+        depth_offsets = []
+        ir_offsets = []
+
+        if callback:
+            callback(0.1, "Sampling file for frame data...")
+
+        scan_limit = file_size - frame_size
+        offset = 0x100000  # Skip first 1 MB (header/metadata)
+
+        while offset < scan_limit:
+            f.seek(offset)
+            sample = f.read(min(1000, frame_size))
+            if len(sample) < 100:
+                break
+
+            values = struct.unpack_from(f'<{len(sample)//2}H', sample)
+
+            # Depth frames: many values in 50-8000 range, few 0xFFFF
+            depth_range = sum(1 for v in values if 50 <= v <= 8000)
+            ffff_count = sum(1 for v in values if v == 0xFFFF)
+
+            is_depth = depth_range > len(values) * 0.3 and ffff_count < len(values) * 0.1
+            # IR frames: many high values (>10000) or many 0xFFFF
+            high_vals = sum(1 for v in values if v > 10000)
+            is_ir = (ffff_count > len(values) * 0.3 or high_vals > len(values) * 0.5) and not is_depth
+
+            if is_depth and want_depth:
+                depth_offsets.append(offset)
+            elif is_ir and want_ir:
+                ir_offsets.append(offset)
+
+            offset += sample_step
+
+        logger.info("Raw scan found %d depth samples, %d IR samples",
+                    len(depth_offsets), len(ir_offsets))
+
+        if not depth_offsets and not ir_offsets:
+            return
+
+        # Phase 2: For each sample region, extract consecutive frames.
+        frame_counts = {st: 0 for st in self.target_streams}
+        max_per_stream = self.max_frames
+        file_stem = self.filepath.stem
+
+        pbar = None
+        if use_tqdm and tqdm is not None:
+            try:
+                pbar = tqdm(
+                    desc=f"[{file_stem}] Extracting raw frames",
+                    unit=" frames",
+                    dynamic_ncols=True,
+                    leave=False
+                )
+            except Exception:
+                pbar = None
+
+        try:
+            for stream_type, sample_offsets in [
+                (self.STREAM_DEPTH, depth_offsets),
+                (self.STREAM_IR, ir_offsets),
+            ]:
+                if stream_type not in self.target_streams:
+                    continue
+                if max_per_stream is not None and frame_counts[stream_type] >= max_per_stream:
+                    continue
+
+                for sample_off in sample_offsets:
+                    # Expand around the sample to find consecutive frames
+                    # Search backward to find the start of the region
+                    region_start = sample_off
+                    while region_start >= frame_size:
+                        f.seek(region_start - frame_size)
+                        check = f.read(min(200, frame_size))
+                        vals = struct.unpack_from(f'<{len(check)//2}H', check)
+
+                        if stream_type == self.STREAM_DEPTH:
+                            dr = sum(1 for v in vals if 50 <= v <= 8000)
+                            ok = dr > len(vals) * 0.3
+                        else:
+                            fc = sum(1 for v in vals if v == 0xFFFF)
+                            hv = sum(1 for v in vals if v > 10000)
+                            ok = fc > len(vals) * 0.3 or hv > len(vals) * 0.5
+
+                        if ok:
+                            region_start -= frame_size
+                        else:
+                            break
+
+                    # Extract frames forward from region_start
+                    off = region_start
+                    while off + frame_size <= file_size:
+                        if max_per_stream is not None and frame_counts[stream_type] >= max_per_stream:
+                            break
+
+                        f.seek(off)
+                        raw = f.read(frame_size)
+                        if len(raw) < frame_size:
+                            break
+
+                        # Quick validation
+                        vals = struct.unpack_from(f'<{len(raw)//2}H', raw)
+                        if stream_type == self.STREAM_DEPTH:
+                            dr = sum(1 for v in vals[:200] if 50 <= v <= 8000)
+                            if dr < 60:  # Less than 30% valid → end of region
+                                break
+                        else:
+                            fc = sum(1 for v in vals[:200] if v == 0xFFFF)
+                            hv = sum(1 for v in vals[:200] if v > 10000)
+                            if fc < 30 and hv < 50:  # Not IR-like → end of region
+                                break
+
+                        frame_info = self._process_frame(
+                            stream_type, raw, frame_counts[stream_type], 0, 0
+                        )
+                        if frame_info:
+                            self.frames.append(frame_info)
+                            frame_counts[stream_type] += 1
+                            total = sum(frame_counts.values())
+
+                            if pbar is not None:
+                                pbar.update(1)
+                                pbar.set_postfix({
+                                    self.STREAM_NAMES.get(st, str(st)): frame_counts[st]
+                                    for st in self.target_streams
+                                    if frame_counts[st] > 0
+                                })
+
+                            if callback and total % 10 == 0:
+                                parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
+                                         for st in self.target_streams if frame_counts[st] > 0]
+                                callback(0.5, f"Extracting: {', '.join(parts)}...")
+
+                        off += frame_size
+
+                    if max_per_stream is not None and all(
+                        frame_counts[st] >= max_per_stream for st in self.target_streams
+                    ):
+                        break
+
+        finally:
+            if pbar is not None:
+                pbar.close()
+
+        logger.info("Raw extraction: %s",
+                     ", ".join(f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
+                              for st in self.target_streams))
 
     def _process_frame(self, stream_type, raw_data, frame_index, seg_counter, event_index):
         """Process raw frame data into a normalized image array."""
