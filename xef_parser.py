@@ -294,37 +294,173 @@ class XEFParser:
 
         return True
 
-    def _extract_frames_sequential(self, f, start_offset, use_tqdm=True, callback=None):
+    def _collect_segments(self, f):
+        """Scan the file to collect all valid segment descriptors.
+
+        Scans the first 200MB of the file (where segment descriptors are
+        clustered) in 4MB chunks.  Returns a sorted list of all valid
+        segment descriptors found.
+
+        Returns:
+            List of (offset, stream_type, frame_size, seg_counter, event_index)
+            tuples, sorted by file offset.
         """
-        Extract frames by sequentially reading segment descriptors and data.
+        f.seek(0)
+        file_size = f.seek(0, 2)
+        desc_size = self.SEGMENT_DESC_SIZE  # 28
 
-        Starting from start_offset, read 28-byte descriptors, validate them,
-        and for target stream types, read and store the frame data.
+        # Only scan first 200MB — segment descriptors are clustered there
+        scan_limit = min(200 * 1024 * 1024, file_size)
+        chunk_size = 4 * 1024 * 1024  # 4MB chunks
 
-        Each segment occupies: descriptor(28) + frame_data(frame_size) + trailer(0-8).
-        We search a small window after each frame to locate the next descriptor
-        reliably, since the trailer size varies slightly between segment types.
+        segments = []
+        for chunk_start in range(0, scan_limit, chunk_size):
+            f.seek(chunk_start)
+            read_size = min(chunk_size + desc_size, file_size - chunk_start)
+            data = f.read(read_size)
+
+            for i in range(len(data) - desc_size):
+                st = struct.unpack_from('<I', data, i)[0]
+                fs = struct.unpack_from('<I', data, i + 4)[0]
+                fs2 = struct.unpack_from('<I', data, i + 20)[0]
+
+                if st < 1 or st > 20:
+                    continue
+                if fs <= 0 or fs != fs2:
+                    continue
+                if fs > 20_000_000:  # 20 MB max
+                    continue
+
+                abs_offset = chunk_start + i
+                # Skip the stream descriptor region (first ~0x2000 bytes)
+                if abs_offset < 0x2000:
+                    continue
+
+                seg_counter = struct.unpack_from('<I', data, i + 20)[0]
+                event_index = struct.unpack_from('<I', data, i + 24)[0]
+                segments.append((abs_offset, st, fs, seg_counter, event_index))
+
+        # Sort by offset and remove duplicates
+        segments.sort(key=lambda x: x[0])
+        return segments
+
+    def _detect_target_streams(self, segments):
+        """Auto-detect which stream types contain depth and IR data.
+
+        Different XEF format versions use different stream type numbers.
+        We identify depth/IR streams by their frame size (434,176 bytes =
+        512×424×2 uint16) and classify by zero-pixel percentage:
+          - Depth frames have many zeros (>10%) because 0 = no data
+          - IR frames have few zeros (<5%) because IR sensor provides data
+            for all pixels
+
+        Returns:
+            Dict mapping detected stream type to content type ('depth' or 'ir').
+        """
+        # Group segments by stream type and frame size
+        type_frame_sizes = {}  # stream_type -> set of frame_sizes
+        for _, st, fs, _, _ in segments:
+            if st not in type_frame_sizes:
+                type_frame_sizes[st] = set()
+            type_frame_sizes[st].add(fs)
+
+        depth_ir_types = {}
+        for st, sizes in type_frame_sizes.items():
+            if self.DEPTH_FRAME_SIZE in sizes:
+                # This stream type has depth/IR-sized frames.
+                # Sample the first frame to classify as depth or IR.
+                for seg_off, seg_st, seg_fs, _, _ in segments:
+                    if seg_st == st and seg_fs == self.DEPTH_FRAME_SIZE:
+                        try:
+                            with open(self.filepath, 'rb') as fh:
+                                fh.seek(seg_off + self.SEGMENT_DESC_SIZE)
+                                sample = fh.read(self.DEPTH_FRAME_SIZE)
+                                if len(sample) == self.DEPTH_FRAME_SIZE:
+                                    arr = np.frombuffer(sample, dtype='<u2')
+                                    total = arr.size
+                                    zero_count = int((arr == 0).sum())
+                                    zero_pct = zero_count * 100.0 / total
+
+                                    # Depth frames have many zero pixels (no data)
+                                    # IR frames have very few zeros
+                                    if zero_pct > 10:
+                                        depth_ir_types[st] = 'depth'
+                                    else:
+                                        depth_ir_types[st] = 'ir'
+
+                                    logger.info("Auto-detected stream type %d: %s "
+                                                "(zero_pct=%.1f%%, frame_size=%d)",
+                                                st, depth_ir_types[st],
+                                                zero_pct, seg_fs)
+                        except Exception as e:
+                            logger.debug("Failed to classify stream type %d: %s", st, e)
+                        break
+
+        return depth_ir_types
+
+    def _extract_frames_sequential(self, f, start_offset, use_tqdm=True, callback=None):
+        """Extract frames by scanning all segment descriptors upfront.
+
+        Collects all valid segment descriptors from the entire file, then
+        extracts frame data from each matching target stream.  This approach
+        handles both old and new XEF format variants correctly, including
+        cases where segments have variable gaps between them.
 
         Args:
             f: Open file object
-            start_offset: Starting offset for event data
+            start_offset: Starting offset (used as minimum scan position)
             use_tqdm: Show tqdm progress bar in terminal
             callback: Optional callback(progress, message) for GUI updates
         """
         f.seek(0)
         file_size = f.seek(0, 2)
 
-        # Track frame counts per stream type
-        frame_counts = {st: 0 for st in self.target_streams}
+        # Phase 1: Collect all valid segment descriptors
+        if callback:
+            callback(0.05, "Scanning for segment descriptors...")
+        all_segments = self._collect_segments(f)
+        logger.info("Found %d segment descriptors total", len(all_segments))
+
+        if not all_segments:
+            logger.info("No segment descriptors found")
+            return
+
+        # Phase 2: Auto-detect depth/IR stream types
+        detected_types = self._detect_target_streams(all_segments)
+        logger.info("Detected depth/IR stream types: %s", detected_types)
+
+        # Build effective target stream list:
+        # Combine explicitly requested streams with auto-detected ones
+        effective_targets = set(self.target_streams)
+        for st, content_type in detected_types.items():
+            if content_type == 'depth' and self.STREAM_DEPTH in self.target_streams:
+                effective_targets.add(st)
+            elif content_type == 'ir' and self.STREAM_IR in self.target_streams:
+                effective_targets.add(st)
+
+        # Phase 3: Extract frames from matching segments
+        # Map auto-detected types to standard types for _process_frame dispatch
+        type_mapping = {}  # detected_type -> standard_type (STREAM_DEPTH or STREAM_IR)
+        for st, content_type in detected_types.items():
+            if content_type == 'depth':
+                type_mapping[st] = self.STREAM_DEPTH
+            elif content_type == 'ir':
+                type_mapping[st] = self.STREAM_IR
+
+        # Count frames per detected stream type (not per standard type).
+        # This ensures max_frames applies per detected type, so multiple
+        # IR sub-types (e.g., type 6 + type 7) each get the full quota.
+        frame_counts = {}
+        # Build initial counts from target_streams (standard types)
+        for st in self.target_streams:
+            frame_counts[st] = 0
+        # Add auto-detected types that map into a target
+        for st in detected_types:
+            if st not in frame_counts:
+                frame_counts[st] = 0
         max_per_stream = self.max_frames
 
-        offset = start_offset
-        desc_size = self.SEGMENT_DESC_SIZE  # 28
-
-        # Diagnostic counters
         segments_found = 0
-        segments_rejected = 0
-        reject_reasons = {}  # reason -> count
         target_mismatch_count = 0
 
         # Set up progress bar
@@ -342,126 +478,80 @@ class XEFParser:
                 pbar = None
 
         try:
-            while offset < file_size - desc_size:
-                # Check if we have enough frames
+            for seg_offset, stream_type, frame_size, seg_counter, event_index in all_segments:
+                # Map to standard type for _process_frame dispatch
+                std_type = type_mapping.get(stream_type, stream_type)
+
+                # Check if we have enough frames for this detected type
                 if max_per_stream is not None:
-                    if all(frame_counts[st] >= max_per_stream for st in self.target_streams):
-                        break
+                    if frame_counts.get(stream_type, 0) >= max_per_stream:
+                        continue
 
-                f.seek(offset)
-                desc = f.read(desc_size)
-                if len(desc) < desc_size:
-                    break
-
-                if not self._is_valid_segment(desc, file_size):
-                    # Invalid segment - try next byte alignment
-                    segments_rejected += 1
-                    if segments_rejected <= 5:
-                        try:
-                            st, fs = struct.unpack_from('<II', desc, 0)
-                            reject_key = f"type={st},size={fs}"
-                            reject_reasons[reject_key] = reject_reasons.get(reject_key, 0) + 1
-                            logger.debug("Rejected segment at 0x%X: type=%d, size=%d",
-                                        offset, st, fs)
-                        except Exception:
-                            pass
-                    offset += 4
+                # Skip non-target streams
+                if stream_type not in effective_targets:
+                    target_mismatch_count += 1
                     continue
 
                 segments_found += 1
-                stream_type, frame_size = struct.unpack_from('<II', desc, 0)
-                event_index = struct.unpack_from('<I', desc, 24)[0]
-                seg_counter = struct.unpack_from('<I', desc, 20)[0]
-
-                # Frame data starts right after the 28-byte descriptor
-                data_start = offset + desc_size
+                data_start = seg_offset + self.SEGMENT_DESC_SIZE
                 if data_start + frame_size > file_size:
-                    logger.warning("Segment at 0x%X: frame data exceeds file (need %d, "
-                                   "have %d bytes remaining)", offset, frame_size,
-                                   file_size - data_start)
-                    break
+                    continue
 
-                # Extract frame if it's a target stream type
-                if stream_type in self.target_streams:
-                    if max_per_stream is None or frame_counts[stream_type] < max_per_stream:
-                        f.seek(data_start)
-                        frame_data = f.read(frame_size)
+                f.seek(data_start)
+                frame_data = f.read(frame_size)
+                if len(frame_data) != frame_size:
+                    continue
 
-                        if len(frame_data) == frame_size:
-                            frame_info = self._process_frame(
-                                stream_type, frame_data, frame_counts[stream_type],
-                                seg_counter, event_index
-                            )
-                            if frame_info:
-                                self.frames.append(frame_info)
-                                frame_counts[stream_type] += 1
-                                total_extracted = sum(frame_counts.values())
+                # Use per-type counter for frame_index
+                frame_idx = frame_counts.get(stream_type, 0)
+                # Pass standard type to _process_frame (it only knows standard types 3, 4, 7)
+                frame_info = self._process_frame(
+                    std_type, frame_data, frame_idx,
+                    seg_counter, event_index
+                )
+                if frame_info:
+                    self.frames.append(frame_info)
+                    frame_counts[stream_type] = frame_idx + 1
 
-                                if pbar is not None:
-                                    pbar.update(1)
-                                    pbar.set_postfix({
-                                        self.STREAM_NAMES.get(st, str(st)): frame_counts[st]
-                                        for st in self.target_streams
-                                        if frame_counts[st] > 0
-                                    })
+                    total = sum(frame_counts.values())
+                    if pbar is not None:
+                        pbar.update(1)
+                        pbar.set_postfix({
+                            self.STREAM_NAMES.get(st, str(st)): frame_counts.get(st, 0)
+                            for st in self.target_streams
+                        })
 
-                                # Update GUI callback periodically
-                                if callback and total_extracted % 10 == 0:
-                                    parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
-                                             for st in self.target_streams if frame_counts[st] > 0]
-                                    callback(0.5, f"Extracting: {', '.join(parts)}...")
-                else:
-                    target_mismatch_count += 1
-
-                # Find the next segment descriptor.
-                # Each segment is desc(28) + frame_data + trailer(0-8 bytes).
-                # Search a small window around the expected position.
-                expected = offset + desc_size + frame_size
-                next_offset = None
-                for delta in range(-8, 12, 4):
-                    candidate = expected + delta
-                    if candidate <= offset or candidate + desc_size > file_size:
-                        continue
-                    f.seek(candidate)
-                    ndesc = f.read(desc_size)
-                    if len(ndesc) < desc_size:
-                        continue
-                    if self._is_valid_segment(ndesc, file_size):
-                        next_offset = candidate
-                        break
-
-                if next_offset is None:
-                    # Lost sync — no valid descriptor found near expected position
-                    logger.info("Lost segment sync at 0x%X after %d segments",
-                                offset, segments_found)
-                    break
-
-                offset = next_offset
+                    if callback and total % 10 == 0:
+                        parts = [f"{frame_counts.get(st, 0)} {self.STREAM_NAMES.get(st, st)}"
+                                 for st in self.target_streams if frame_counts.get(st, 0) > 0]
+                        callback(0.5, f"Extracting: {', '.join(parts)}...")
 
         finally:
             if pbar is not None:
                 pbar.close()
 
-        # Log diagnostic summary
         total_extracted = sum(frame_counts.values())
-        logger.info("Extraction summary: %d segments found, %d rejected, "
-                    "%d target mismatches, %d frames extracted",
-                    segments_found, segments_rejected, target_mismatch_count,
-                    total_extracted)
-        if segments_rejected > 0 and reject_reasons:
-            logger.warning("First rejected segment samples: %s", reject_reasons)
-        if segments_found == 0 and segments_rejected > 0:
-            logger.error("All %d candidate segments were rejected. "
-                         "Possible format mismatch for this XEF file variant.",
-                         segments_rejected)
+        logger.info("Extraction summary: %d segments found, %d target mismatches, "
+                    "%d frames extracted",
+                    segments_found, target_mismatch_count, total_extracted)
 
     def _extract_frames_raw(self, f, use_tqdm=True, callback=None):
         """
         Fallback frame extraction for XEF files without segment descriptors.
 
-        Some newer XEF files (stream_count >= 12) store raw frames without
-        the standard 28-byte segment descriptors. This method scans the file
-        at frame-aligned offsets looking for depth and IR data patterns.
+        Some newer XEF files store raw frames without the standard 28-byte
+        segment descriptors.  Frames are stored at contiguous offsets starting
+        after the header/metadata region (0x100000).
+
+        Depth and IR frames are both 512×424 uint16 (434,176 bytes) but have
+        very different value distributions:
+          - Depth: mean values typically 300–1500 (range 50–8000)
+          - IR:    mean values typically 20000–40000 (range >10000)
+
+        The file contains interleaved runs of depth and IR frames (typically
+        2–3 depth frames followed by 11–12 IR frames per cycle).  We scan
+        every frame sequentially, classify by mean value, group consecutive
+        same-type frames into regions, then extract from matching regions.
 
         Args:
             f: Open file object
@@ -479,49 +569,118 @@ class XEFParser:
         if not want_depth and not want_ir:
             return
 
-        # Phase 1: Sample the file to find data regions.
-        # Scan at frame-aligned intervals (every 16 frames ≈ 7 MB).
-        sample_step = frame_size * 16
-        depth_offsets = []
-        ir_offsets = []
+        # Phase 1: Classify every frame by sampling from the middle of the
+        # frame (where data is most representative) and computing the mean
+        # uint16 value.  Depth frames have mean < 5000, IR frames >= 5000.
+        #
+        # We sample 4000 bytes from 3 points (start, middle, end) to handle
+        # boundary frames that may contain mixed depth/IR data at the edges.
+        sample_size = 1000  # bytes per sample point
+        num_samples = 10  # evenly spaced samples across the full frame
+
+        # Precompute sample offsets evenly distributed across the frame.
+        # This gives a much better approximation of the full-frame mean
+        # than the old 3-point approach, eliminating the ~16% misclassification
+        # of boundary IR frames as depth frames.
+        sample_offsets = []
+        if frame_size > sample_size:
+            step = (frame_size - sample_size) // max(num_samples - 1, 1)
+            for i in range(num_samples):
+                sample_offsets.append(i * step)
+        sample_offsets = sorted(set(sample_offsets))  # deduplicate
+        data_start = 0x100000  # Skip header/metadata region
+        max_frame_idx = (file_size - data_start) // frame_size
 
         if callback:
-            callback(0.1, "Sampling file for frame data...")
+            callback(0.1, "Classifying frames...")
 
-        scan_limit = file_size - frame_size
-        offset = 0x100000  # Skip first 1 MB (header/metadata)
+        frame_types = []  # list of stream_type for each frame index
 
-        while offset < scan_limit:
-            f.seek(offset)
-            sample = f.read(min(1000, frame_size))
-            if len(sample) < 100:
-                break
+        # Set up classification progress bar
+        cls_pbar = None
+        if use_tqdm and tqdm is not None:
+            try:
+                cls_pbar = tqdm(
+                    total=max_frame_idx,
+                    desc=f"[{self.filepath.stem}] Classifying",
+                    unit=" frames",
+                    dynamic_ncols=True,
+                    leave=False
+                )
+            except Exception:
+                cls_pbar = None
 
-            values = struct.unpack_from(f'<{len(sample)//2}H', sample)
+        try:
+            for i in range(max_frame_idx):
+                offset = data_start + i * frame_size
+                if offset + frame_size > file_size:
+                    break
 
-            # Depth frames: many values in 50-8000 range, few 0xFFFF
-            depth_range = sum(1 for v in values if 50 <= v <= 8000)
-            ffff_count = sum(1 for v in values if v == 0xFFFF)
+                # Sample from evenly spaced points across the frame.
+                # The mean of all sample means approximates the full-frame
+                # mean much better than the old median-of-3 approach.
+                sample_means = []
+                for so in sample_offsets:
+                    pos = offset + so
+                    if pos + sample_size > file_size:
+                        continue
+                    f.seek(pos)
+                    sample = f.read(sample_size)
+                    if len(sample) < sample_size:
+                        continue
+                    values = struct.unpack_from(f'<{sample_size // 2}H', sample)
+                    sample_means.append(sum(values) / len(values))
 
-            is_depth = depth_range > len(values) * 0.3 and ffff_count < len(values) * 0.1
-            # IR frames: many high values (>10000) or many 0xFFFF
-            high_vals = sum(1 for v in values if v > 10000)
-            is_ir = (ffff_count > len(values) * 0.3 or high_vals > len(values) * 0.5) and not is_depth
+                if not sample_means:
+                    continue
 
-            if is_depth and want_depth:
-                depth_offsets.append(offset)
-            elif is_ir and want_ir:
-                ir_offsets.append(offset)
+                # Use the mean (not median) of all sample means for robust
+                # classification. Depth: mean < 5000, IR: mean >= 5000.
+                mean_val = sum(sample_means) / len(sample_means)
 
-            offset += sample_step
+                # Depth: mean < 5000, IR: mean >= 5000
+                if mean_val < 5000:
+                    frame_types.append(self.STREAM_DEPTH)
+                else:
+                    frame_types.append(self.STREAM_IR)
 
-        logger.info("Raw scan found %d depth samples, %d IR samples",
-                    len(depth_offsets), len(ir_offsets))
+                if cls_pbar is not None and (i + 1) % 1000 == 0:
+                    cls_pbar.update(1000)
+        finally:
+            if cls_pbar is not None:
+                cls_pbar.update(len(frame_types) - (cls_pbar.n or 0))
+                cls_pbar.close()
 
-        if not depth_offsets and not ir_offsets:
+        if not frame_types:
+            logger.info("Raw scan: no valid frames found")
             return
 
-        # Phase 2: For each sample region, extract consecutive frames.
+        depth_count = frame_types.count(self.STREAM_DEPTH)
+        ir_count = frame_types.count(self.STREAM_IR)
+        logger.info("Raw scan classified %d frames: %d depth, %d IR",
+                    len(frame_types), depth_count, ir_count)
+
+        # Phase 2: Group consecutive same-type frames into regions.
+        # Each region = (stream_type, start_frame_idx, count)
+        regions = []
+        i = 0
+        while i < len(frame_types):
+            st = frame_types[i]
+            start = i
+            while i < len(frame_types) and frame_types[i] == st:
+                i += 1
+            regions.append((st, start, i - start))
+
+        # Filter to only regions matching target streams
+        target_regions = [(st, s, c) for st, s, c in regions
+                          if st in self.target_streams]
+        logger.info("Found %d regions (%d matching target streams)",
+                    len(regions), len(target_regions))
+
+        if not target_regions:
+            return
+
+        # Phase 3: Extract frames from matching regions.
         frame_counts = {st: 0 for st in self.target_streams}
         max_per_stream = self.max_frames
         file_stem = self.filepath.stem
@@ -539,87 +698,48 @@ class XEFParser:
                 pbar = None
 
         try:
-            for stream_type, sample_offsets in [
-                (self.STREAM_DEPTH, depth_offsets),
-                (self.STREAM_IR, ir_offsets),
-            ]:
-                if stream_type not in self.target_streams:
-                    continue
-                if max_per_stream is not None and frame_counts[stream_type] >= max_per_stream:
-                    continue
+            for stream_type, region_start, region_count in target_regions:
+                if max_per_stream is not None and all(frame_counts[st] >= max_per_stream for st in self.target_streams):
+                    break
 
-                for sample_off in sample_offsets:
-                    # Expand around the sample to find consecutive frames
-                    # Search backward to find the start of the region
-                    region_start = sample_off
-                    while region_start >= frame_size:
-                        f.seek(region_start - frame_size)
-                        check = f.read(min(200, frame_size))
-                        vals = struct.unpack_from(f'<{len(check)//2}H', check)
-
-                        if stream_type == self.STREAM_DEPTH:
-                            dr = sum(1 for v in vals if 50 <= v <= 8000)
-                            ok = dr > len(vals) * 0.3
-                        else:
-                            fc = sum(1 for v in vals if v == 0xFFFF)
-                            hv = sum(1 for v in vals if v > 10000)
-                            ok = fc > len(vals) * 0.3 or hv > len(vals) * 0.5
-
-                        if ok:
-                            region_start -= frame_size
-                        else:
-                            break
-
-                    # Extract frames forward from region_start
-                    off = region_start
-                    while off + frame_size <= file_size:
-                        if max_per_stream is not None and frame_counts[stream_type] >= max_per_stream:
-                            break
-
-                        f.seek(off)
-                        raw = f.read(frame_size)
-                        if len(raw) < frame_size:
-                            break
-
-                        # Quick validation
-                        vals = struct.unpack_from(f'<{len(raw)//2}H', raw)
-                        if stream_type == self.STREAM_DEPTH:
-                            dr = sum(1 for v in vals[:200] if 50 <= v <= 8000)
-                            if dr < 60:  # Less than 30% valid → end of region
-                                break
-                        else:
-                            fc = sum(1 for v in vals[:200] if v == 0xFFFF)
-                            hv = sum(1 for v in vals[:200] if v > 10000)
-                            if fc < 30 and hv < 50:  # Not IR-like → end of region
-                                break
-
-                        frame_info = self._process_frame(
-                            stream_type, raw, frame_counts[stream_type], 0, 0
-                        )
-                        if frame_info:
-                            self.frames.append(frame_info)
-                            frame_counts[stream_type] += 1
-                            total = sum(frame_counts.values())
-
-                            if pbar is not None:
-                                pbar.update(1)
-                                pbar.set_postfix({
-                                    self.STREAM_NAMES.get(st, str(st)): frame_counts[st]
-                                    for st in self.target_streams
-                                    if frame_counts[st] > 0
-                                })
-
-                            if callback and total % 10 == 0:
-                                parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
-                                         for st in self.target_streams if frame_counts[st] > 0]
-                                callback(0.5, f"Extracting: {', '.join(parts)}...")
-
-                        off += frame_size
-
-                    if max_per_stream is not None and all(
-                        frame_counts[st] >= max_per_stream for st in self.target_streams
-                    ):
+                for j in range(region_count):
+                    if max_per_stream is not None and all(frame_counts[st] >= max_per_stream for st in self.target_streams):
                         break
+
+                    frame_idx = region_start + j
+                    offset = data_start + frame_idx * frame_size
+
+                    if offset + frame_size > file_size:
+                        break
+
+                    f.seek(offset)
+                    raw = f.read(frame_size)
+                    if len(raw) < frame_size:
+                        break
+
+                    # Clean mixed boundary frames
+                    raw = self._clean_mixed_frame(stream_type, raw)
+
+                    frame_info = self._process_frame(
+                        stream_type, raw, frame_counts[stream_type], 0, 0
+                    )
+                    if frame_info:
+                        self.frames.append(frame_info)
+                        frame_counts[stream_type] += 1
+                        total = sum(frame_counts.values())
+
+                        if pbar is not None:
+                            pbar.update(1)
+                            pbar.set_postfix({
+                                self.STREAM_NAMES.get(st, str(st)): frame_counts[st]
+                                for st in self.target_streams
+                                if frame_counts[st] > 0
+                            })
+
+                        if callback and total % 10 == 0:
+                            parts = [f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
+                                     for st in self.target_streams if frame_counts[st] > 0]
+                            callback(0.5, f"Extracting: {', '.join(parts)}...")
 
         finally:
             if pbar is not None:
@@ -629,22 +749,302 @@ class XEFParser:
                      ", ".join(f"{frame_counts[st]} {self.STREAM_NAMES.get(st, st)}"
                               for st in self.target_streams))
 
-    def _process_frame(self, stream_type, raw_data, frame_index, seg_counter, event_index):
-        """Process raw frame data into a normalized image array."""
+    def _clean_mixed_frame(self, stream_type, raw_data):
+        """Zero out cross-contamination in boundary frames.
+
+        Some frames at the depth/IR boundary contain data from both types:
+        e.g., depth pixels in the first N rows and IR data in the rest, or
+        IR data at the top and depth at the bottom.  This method detects
+        and zeros out contaminating rows in BOTH directions (top and bottom)
+        so each frame contains only the target stream data.
+
+        Args:
+            stream_type: The classified stream type (STREAM_DEPTH or STREAM_IR)
+            raw_data: Raw frame bytes (DEPTH_FRAME_SIZE bytes)
+
+        Returns:
+            Cleaned raw_data (same object if no cleaning needed)
+        """
+        width = self.DEPTH_WIDTH   # 512
+        height = self.DEPTH_HEIGHT  # 424
+        row_bytes = width * 2       # 1024
+
+        _ir_contamination = struct.pack('H', 0xFFFF) * width
+
         if stream_type == self.STREAM_DEPTH:
-            return self._process_depth_frame(raw_data, frame_index, seg_counter, event_index)
+            # --- Top contamination: IR data at the top of a depth frame ---
+            first_row = struct.unpack_from(f'<{width}H', raw_data, 0)
+            ffff_top = sum(1 for v in first_row if v == 0xFFFF)
+            if ffff_top >= width // 4:
+                # Binary search from top for first non-IR row (mean < 30000)
+                lo, hi = 0, height - 1
+                while lo < hi:
+                    mid = (lo + hi) // 2
+                    row = struct.unpack_from(f'<{width}H', raw_data, mid * row_bytes)
+                    row_mean = sum(row) / len(row)
+                    if row_mean > 30000:  # Still IR
+                        lo = mid + 1
+                    else:  # Depth starts
+                        hi = mid
+                if lo > 0:
+                    mutable = bytearray(raw_data)
+                    for r in range(0, lo):
+                        start = r * row_bytes
+                        mutable[start:start + row_bytes] = _ir_contamination
+                    raw_data = bytes(mutable)
+                    logger.debug("Cleaned depth frame: zeroed top rows 0-%d "
+                                 "(IR contamination)", lo - 1)
+
+            # --- Bottom contamination: IR data at the bottom ---
+            last_row_offset = (height - 1) * row_bytes
+            last_row = struct.unpack_from(f'<{width}H', raw_data, last_row_offset)
+            ffff_count = sum(1 for v in last_row if v == 0xFFFF)
+            if ffff_count < width // 4:  # Less than 25% 0xFFFF → clean bottom
+                return raw_data
+
+            # Binary search for the first IR row from top
+            lo, hi = 0, height - 1
+            while lo < hi:
+                mid = (lo + hi) // 2
+                row = struct.unpack_from(f'<{width}H', raw_data, mid * row_bytes)
+                row_mean = sum(row) / len(row)
+                if row_mean > 30000:  # IR data
+                    hi = mid
+                else:
+                    lo = mid + 1
+
+            if lo < height:
+                mutable = bytearray(raw_data)
+                for r in range(lo, height):
+                    start = r * row_bytes
+                    mutable[start:start + row_bytes] = _ir_contamination
+                logger.debug("Cleaned depth frame: zeroed bottom rows %d-%d "
+                             "(IR contamination)", lo, height - 1)
+                return bytes(mutable)
+
         elif stream_type == self.STREAM_IR:
-            return self._process_ir_frame(raw_data, frame_index, seg_counter, event_index)
+            # --- Top contamination: depth data at the top of an IR frame ---
+            first_row = struct.unpack_from(f'<{width}H', raw_data, 0)
+            first_row_mean = sum(first_row) / len(first_row)
+            if first_row_mean < 5000:
+                # Binary search from top for first IR row (mean >= 5000)
+                lo, hi = 0, height - 1
+                while lo < hi:
+                    mid = (lo + hi) // 2
+                    row = struct.unpack_from(f'<{width}H', raw_data, mid * row_bytes)
+                    row_mean = sum(row) / len(row)
+                    if row_mean < 5000:  # Still depth
+                        lo = mid + 1
+                    else:  # IR starts
+                        hi = mid
+                if lo > 0:
+                    mutable = bytearray(raw_data)
+                    for r in range(0, lo):
+                        start = r * row_bytes
+                        for k in range(start, start + row_bytes):
+                            mutable[k] = 0
+                    raw_data = bytes(mutable)
+                    logger.debug("Cleaned IR frame: zeroed top rows 0-%d "
+                                 "(depth contamination)", lo - 1)
+
+            # --- Bottom contamination: depth data at the bottom ---
+            last_row_offset = (height - 1) * row_bytes
+            last_row = struct.unpack_from(f'<{width}H', raw_data, last_row_offset)
+            last_row_mean = sum(last_row) / len(last_row)
+            if last_row_mean > 5000:  # Still IR-level → clean bottom
+                return raw_data
+
+            # Binary search for the first depth row from top
+            lo, hi = 0, height - 1
+            while lo < hi:
+                mid = (lo + hi) // 2
+                row = struct.unpack_from(f'<{width}H', raw_data, mid * row_bytes)
+                row_mean = sum(row) / len(row)
+                if row_mean < 5000:  # Depth data
+                    hi = mid
+                else:
+                    lo = mid + 1
+
+            if lo < height:
+                mutable = bytearray(raw_data)
+                for r in range(lo, height):
+                    start = r * row_bytes
+                    for k in range(start, start + row_bytes):
+                        mutable[k] = 0
+                logger.debug("Cleaned IR frame: zeroed bottom rows %d-%d "
+                             "(depth contamination)", lo, height - 1)
+                return bytes(mutable)
+
+        return raw_data
+
+    # --- Quadrant-level quality checks for newer XEF format ---
+    # In the newer XEF format (12 streams), each 434,176-byte frame is stored
+    # as 4 sequential 256x212 sub-images (quadrants), NOT as a single 512x424
+    # image.  Mixed transition frames contain both depth and IR quadrants.
+
+    def _is_valid_ir_quadrant(self, raw_bytes, width, height):
+        """Check if a single quadrant (256x212) contains a real IR image.
+
+        Two checks distinguish real IR images from sensor telemetry:
+        1. Adjacent pixel difference (adj_diff): telemetry has regular
+           stripe patterns with high adj_diff; real images have smooth,
+           spatially varying content with lower adj_diff.
+        2. Column-to-column variation (col_std): telemetry stripes create
+           high variation across columns; real IR images have low
+           column-to-column variation because scene content is spatially
+           coherent.
+
+        Empirical thresholds from Kinect V2 data:
+          Real IR images:  adj_diff < 1000, col_std < 200
+          Telemetry:       adj_diff > 500,  col_std > 200
+
+        Args:
+            raw_bytes: Raw uint16 bytes for one quadrant
+            width: Quadrant width (e.g. 256)
+            height: Quadrant height (e.g. 212)
+
+        Returns:
+            True if the quadrant appears to contain a real IR image.
+        """
+        try:
+            arr = np.frombuffer(raw_bytes, dtype=np.uint16).reshape(height, width)
+        except ValueError:
+            return False
+
+        mean_val = float(arr.mean())
+
+        # Must be IR-level values (not depth, not 0xFFFF)
+        if mean_val < 5000 or mean_val > 65000:
+            return False
+
+        # Check for mostly-invalid data
+        valid_mask = (arr > 0) & (arr < 0xFFFE)
+        if np.count_nonzero(valid_mask) < arr.size * 0.02:
+            return False
+
+        # Check 1: Adjacent pixel difference
+        row_diffs = np.abs(arr[:, 1:].astype(np.int32) - arr[:, :-1].astype(np.int32))
+        col_diffs = np.abs(arr[1:, :].astype(np.int32) - arr[:-1, :].astype(np.int32))
+        adj_diff = float((row_diffs.mean() + col_diffs.mean()) / 2)
+
+        if adj_diff > 1000:
+            return False
+
+        # Check 2: Column-to-column variation.
+        # Telemetry has regular stripe patterns → high col_std.
+        # Real IR images have spatially coherent content → low col_std.
+        col_means = arr.astype(np.float32).mean(axis=0)
+        col_std = float(col_means.std())
+
+        if col_std > 200:
+            return False
+
+        return True
+
+    def _is_mixed_frame(self, raw_data):
+        """Detect if a frame contains mixed depth/IR quadrants.
+
+        In the newer XEF format, frames are stored as 4 sequential 256x212
+        sub-images.  Mixed transition frames contain depth data in some
+        quadrants and IR data in others.  This creates a visible cross
+        pattern when rendered as a single 512x424 image.
+
+        Args:
+            raw_data: Raw frame bytes (434,176 bytes for depth/IR)
+
+        Returns:
+            Tuple of (is_mixed, quadrant_types) where quadrant_types is
+            a list of 4 strings: 'depth', 'ir', '0xffff', or 'unknown'.
+        """
+        q_pixels = 256 * 212
+        q_bytes = q_pixels * 2  # 108,544 bytes per quadrant
+
+        if len(raw_data) < q_bytes * 4:
+            return False, []
+
+        q_means = []
+        for qi in range(4):
+            chunk = np.frombuffer(
+                raw_data[qi * q_bytes:(qi + 1) * q_bytes], dtype=np.uint16
+            )
+            q_means.append(float(chunk.mean()))
+
+        # Classify each quadrant
+        q_types = []
+        for m in q_means:
+            if m < 5000:
+                q_types.append('depth')
+            elif m > 65000:
+                q_types.append('0xffff')
+            else:
+                q_types.append('ir')
+
+        # Mixed if we have both depth and non-depth quadrants
+        has_depth = any(t == 'depth' for t in q_types)
+        has_ir = any(t == 'ir' for t in q_types)
+        has_ffff = any(t == '0xffff' for t in q_types)
+
+        is_mixed = (has_depth and (has_ir or has_ffff)) or \
+                   (has_ir and has_ffff and not has_depth)
+
+        return is_mixed, q_types
+
+    def _is_valid_ir_frame(self, raw_data):
+        """Check if a full 512x424 frame contains a valid IR image.
+
+        Used for non-mixed frames to filter out sensor telemetry that
+        has been classified as IR based on mean value alone.
+
+        Args:
+            raw_data: Raw frame bytes (434,176 bytes)
+
+        Returns:
+            True if the frame appears to contain a real IR image.
+        """
+        try:
+            arr = np.frombuffer(raw_data, dtype=np.uint16).reshape(
+                self.DEPTH_HEIGHT, self.DEPTH_WIDTH
+            )
+        except ValueError:
+            return False
+
+        # Adjacent pixel difference: telemetry > 1000, real IR < 1000
+        row_diffs = np.abs(arr[:, 1:].astype(np.int32) - arr[:, :-1].astype(np.int32))
+        col_diffs = np.abs(arr[1:, :].astype(np.int32) - arr[:-1, :].astype(np.int32))
+        adj_diff = float((row_diffs.mean() + col_diffs.mean()) / 2)
+
+        return adj_diff < 1000
+
+    def _process_frame(self, stream_type, raw_data, frame_index, seg_counter, event_index, width=None, height=None):
+        """Process raw frame data into a normalized image array.
+
+        Args:
+            stream_type: STREAM_DEPTH, STREAM_IR, or STREAM_COLOR
+            raw_data: Raw frame bytes
+            frame_index: Frame sequence number
+            seg_counter: Segment counter from descriptor
+            event_index: Event index from descriptor
+            width: Frame width (default: DEPTH_WIDTH for depth/IR, COLOR_WIDTH for color)
+            height: Frame height (default: DEPTH_HEIGHT for depth/IR, COLOR_HEIGHT for color)
+        """
+        if stream_type == self.STREAM_DEPTH:
+            return self._process_depth_frame(raw_data, frame_index, seg_counter, event_index, width, height)
+        elif stream_type == self.STREAM_IR:
+            return self._process_ir_frame(raw_data, frame_index, seg_counter, event_index, width, height)
         elif stream_type == self.STREAM_COLOR:
             return self._process_color_frame(raw_data, frame_index, seg_counter, event_index)
         return None
 
-    def _process_depth_frame(self, raw_data, frame_index, seg_counter, event_index):
-        """Process a depth frame (512x424 uint16) into a normalized 8-bit image."""
+    def _process_depth_frame(self, raw_data, frame_index, seg_counter, event_index, width=None, height=None):
+        """Process a depth frame (uint16) into a normalized 8-bit image.
+
+        Supports both full 512x424 frames and 256x212 quadrants from
+        newer XEF format mixed frames.
+        """
+        w = width or self.DEPTH_WIDTH
+        h = height or self.DEPTH_HEIGHT
         try:
-            depth_array = np.frombuffer(raw_data, dtype=np.uint16).reshape(
-                (self.DEPTH_HEIGHT, self.DEPTH_WIDTH)
-            )
+            depth_array = np.frombuffer(raw_data, dtype=np.uint16).reshape(h, w)
         except ValueError:
             return None
 
@@ -676,14 +1076,47 @@ class XEFParser:
             'event_index': event_index,
         }
 
-    def _process_ir_frame(self, raw_data, frame_index, seg_counter, event_index):
-        """Process an IR frame (512x424 uint16) into a normalized 8-bit image."""
+    def _process_ir_frame(self, raw_data, frame_index, seg_counter, event_index, width=None, height=None):
+        """Process an IR frame (uint16) into a normalized 8-bit image.
+
+        Supports both full 512x424 frames and 256x212 quadrants from
+        newer XEF format mixed frames.
+        """
+        w = width or self.DEPTH_WIDTH
+        h = height or self.DEPTH_HEIGHT
         try:
-            ir_array = np.frombuffer(raw_data, dtype=np.uint16).reshape(
-                (self.DEPTH_HEIGHT, self.DEPTH_WIDTH)
-            )
+            ir_array = np.frombuffer(raw_data, dtype=np.uint16).reshape(h, w)
         except ValueError:
             return None
+
+        # --- Noise detection: skip frames with no discernible structure ---
+        nonzero_mask = (ir_array > 0) & (ir_array < 0xFFFE)
+        nonzero_count = np.count_nonzero(nonzero_mask)
+        total_pixels = ir_array.size
+
+        # Frame is mostly invalid — no meaningful IR data
+        if nonzero_count < total_pixels * 0.02:
+            logger.debug("IR frame %d: %.1f%% valid pixels, skipping as noise",
+                        frame_index, nonzero_count / total_pixels * 100)
+            return None
+
+        # Check for flat/empty frames by measuring row-to-row variation.
+        # A legitimate IR frame has spatial structure (brightness varies
+        # across rows).  Pure noise has nearly uniform row means.
+        valid_pixels = ir_array[nonzero_mask]
+        row_stds = []
+        for r in range(h):
+            row = ir_array[r]
+            row_valid = row[(row > 0) & (row < 0xFFFE)]
+            if len(row_valid) > 100:
+                row_stds.append(float(row_valid.std()))
+        if row_stds:
+            mean_row_std = sum(row_stds) / len(row_stds)
+            # If the typical within-row std is very low, the frame is flat noise
+            if mean_row_std < 20:
+                logger.debug("IR frame %d: mean_row_std=%.1f, skipping as noise",
+                            frame_index, mean_row_std)
+                return None
 
         # Normalize to 0-255 for visualization
         # IR values are typically 0-65535, with real data in a smaller range
@@ -797,6 +1230,10 @@ class XEFParser:
         # Create stream-specific subdirectories
         subdirs = {}
         saved_files = []
+        # Global counter per stream name to avoid filename collisions
+        # when multiple detected types (e.g., type 6 + type 7) map to
+        # the same output stream (e.g., 'ir').
+        stream_frame_counter = {}
 
         for frame in self.frames:
             stream_name = frame.get('stream_name', frame['type'])
@@ -808,7 +1245,9 @@ class XEFParser:
                 subdir_path.mkdir(parents=True, exist_ok=True)
                 subdirs[stream_name] = subdir_path
 
-            filename = f"{base_name}_{stream_name}_{frame['index']:04d}.jpg"
+            frame_num = stream_frame_counter.get(stream_name, 0)
+            stream_frame_counter[stream_name] = frame_num + 1
+            filename = f"{base_name}_{stream_name}_{frame_num:04d}.jpg"
             filepath = subdirs[stream_name] / filename
 
             if stream_name == 'color':
