@@ -24,7 +24,8 @@ uv.lock
 .DS_Store
 Thumbs.db
 
-# Kinect XEF input files (keep sample, ignore large files)
+# Kinect XEF input files (ignore all .xef files)
+XEF2JPEG_Input/**/*.xef
 XEF2JPEG_Input/*.xef
 !XEF2JPEG_Input/.gitkeep
 
@@ -43,3 +44,4 @@ xef2jpeg_settings.json
 
 # Generated icon cache
 .icon_cache.ico
+.icon_cache.png
