@@ -15,5 +15,5 @@ numpy>=1.24.0
 # Progress bar in command line
 tqdm>=4.60.0
 
-# For potential future enhancements
-# opencv-python>=4.8.0
+# For IR image CLAHE normalization
+opencv-python>=4.8.0

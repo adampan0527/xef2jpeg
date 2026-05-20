@@ -32,6 +32,11 @@ try:
 except ImportError:
     tqdm = None
 
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+
 logger = logging.getLogger(__name__)
 
 # Log file path (shared with xef2jpeg.py)
@@ -1119,17 +1124,34 @@ class XEFParser:
                 return None
 
         # Normalize to 0-255 for visualization
-        # IR values are typically 0-65535, with real data in a smaller range
-        ir_normalized = np.zeros_like(ir_array, dtype=np.uint8)
-
-        # Filter out obvious invalid values (0xFFFF and 0 are typically invalid)
+        # CLAHE (Contrast Limited Adaptive Histogram Equalization) handles
+        # the non-uniform IR brightness pattern where edges are much brighter
+        # than the center, preventing the bright outer ring from washing out
+        # the actual scene content in the middle.
         valid_mask = (ir_array > 0) & (ir_array < 0xFFFE)
 
-        if np.any(valid_mask):
+        if cv2 is not None and np.any(valid_mask):
+            # Map valid uint16 range into uint8 via robust percentile scaling,
+            # then apply CLAHE for local contrast enhancement.
+            valid_values = ir_array[valid_mask]
+            vmin, vmax = np.percentile(valid_values, [0, 99])
+            if vmax > vmin:
+                scaled = np.clip((ir_array.astype(np.float32) - vmin) * 255.0 / (vmax - vmin), 0, 255)
+            else:
+                scaled = np.where(valid_mask, 128, 0).astype(np.float32)
+            ir_u8 = scaled.astype(np.uint8)
+
+            clahe = cv2.createCLAHE(clipLimit=5.0, tileGridSize=(4, 4))
+            ir_normalized = clahe.apply(ir_u8)
+
+            # Restore zero/invalid pixels to black (CLAHE may lift them)
+            ir_normalized[~valid_mask] = 0
+        elif np.any(valid_mask):
+            # Fallback without OpenCV: percentile normalization
+            ir_normalized = np.zeros_like(ir_array, dtype=np.uint8)
             valid_values = ir_array[valid_mask]
             vmin, vmax = np.percentile(valid_values, [2, 98])
             if vmax > vmin:
-                # Clip to percentile range and normalize
                 clipped = np.clip(ir_array, vmin, vmax)
                 ir_normalized = ((clipped - vmin) * 255.0 / (vmax - vmin)).astype(np.uint8)
 
